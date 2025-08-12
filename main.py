@@ -9,8 +9,9 @@ aspect_ratio = 4 / 3
 width = 800
 height = width / aspect_ratio
 fps = 20
-
 window = pygame.display.set_mode((width, height))
+buffer_window = pygame.Surface((width, height))
+
 # Boje
 WHITE = (255,255,255)
 BLACK = (0,0,0)
@@ -81,15 +82,20 @@ def player_movement(player_speed, player_a, player_l):
     return dx, dy, dz, player_a, player_l
 
 
-def drawWall(x1, x2, b1, b2):
+def drawWall(x1, x2, b1, b2, t1, t2):
+    buffer_window.fill(BLACK)
     dyb = b2 - b1
+    dyt = t2 - t1
     dx = x2 - x1
     if dx == 0:
         dx = 1
     xs = x1
     for x in range(x1, x2):
         y1 = dyb * (x - xs) / dx + b1
-        window.set_at((x, int(y1)), YELLOW)
+        y2 = dyt * (x - xs) / dx + t1
+        for y in range(int(y1), int(y2)):
+            buffer_window.set_at((x, y), YELLOW)
+    window.blit(buffer_window, (0, 0))
     
 
 def draw3D():
@@ -105,22 +111,26 @@ def draw3D():
     # World X position
     world_x[0] = x1 * CS - y1 * SN
     world_x[1] = x2 * CS - y2 * SN
+    world_x[2] = world_x[0]
+    world_x[3] = world_x[1]
     # World Y position
     world_y[0] = y1 * CS + x1 * SN
     world_y[1] = y2 * CS + x2 * SN
+    world_y[2] = world_y[0]
+    world_y[3] = world_y[1]
     # World Z position
     world_z[0] = 0 - player_z + ((player_l - 180) * world_y[0] / 64)
     world_z[1] = 0 - player_z + ((player_l - 180) * world_y[1] / 64)
+    world_z[2] = world_z[0] + 40
+    world_z[3] = world_z[1] + 40
     # Screen x, y, z
     world_x[0] = int(world_x[0] * focal_lenght / world_y[0] + width / 2); world_y[0] = int(world_z[0] * focal_lenght / world_y[0] + height / 2)
     world_x[1] = int(world_x[1] * focal_lenght / world_y[1] + width / 2); world_y[1] = int(world_z[1] * focal_lenght / world_y[1] + height / 2)
+    world_x[2] = int(world_x[2] * focal_lenght / world_y[2] + width / 2); world_y[2] = int(world_z[2] * focal_lenght / world_y[2] + height / 2)
+    world_x[3] = int(world_x[3] * focal_lenght / world_y[3] + width / 2); world_y[3] = int(world_z[3] * focal_lenght / world_y[3] + height / 2)
     #print(f"worldx: {world_x}, world_y: {world_y}")
     # Draw points
-    if(world_x[0] > 0 and world_x[0] < width and world_y[0] > 0 and world_y[0] < height):
-        window.set_at((int(world_x[0]), int(world_y[0])), YELLOW)
-    if(world_x[1] > 0 and world_x[1] < width and world_y[1] > 0 and world_y[1] < height):
-        window.set_at((int(world_x[1]), int(world_y[1])), YELLOW)
-    drawWall(world_x[0], world_x[1], world_y[0], world_y[1])
+    drawWall(world_x[0], world_x[1], world_y[0], world_y[1], world_y[2], world_y[3])
         
 def rad(deg):
     return deg / 180 * math.pi
