@@ -78,9 +78,19 @@ def player_movement(player_speed, player_a, player_l):
         player_l += sensitivity
         if player_l > 360:
             player_l = player_l - 360
-
     return dx, dy, dz, player_a, player_l
 
+
+def drawWall(x1, x2, b1, b2):
+    dyb = b2 - b1
+    dx = x2 - x1
+    if dx == 0:
+        dx = 1
+    xs = x1
+    for x in range(x1, x2):
+        y1 = dyb * (x - xs) / dx + b1
+        window.set_at((x, int(y1)), YELLOW)
+    
 
 def draw3D():
     world_x = [0, 0, 0, 0]
@@ -101,18 +111,17 @@ def draw3D():
     # World Z position
     world_z[0] = 0 - player_z + ((player_l - 180) * world_y[0] / 64)
     world_z[1] = 0 - player_z + ((player_l - 180) * world_y[1] / 64)
-    print((player_l,world_y[0]))
     # Screen x, y, z
-    world_x[0] = world_x[0] * focal_lenght / world_y[0] + width / 2; world_y[0] = world_z[0] * focal_lenght / world_y[0] + height / 2
-    world_x[1] = world_x[1] * focal_lenght / world_y[1] + width / 2; world_y[1] = world_z[1] * focal_lenght / world_y[1] + height / 2
+    world_x[0] = int(world_x[0] * focal_lenght / world_y[0] + width / 2); world_y[0] = int(world_z[0] * focal_lenght / world_y[0] + height / 2)
+    world_x[1] = int(world_x[1] * focal_lenght / world_y[1] + width / 2); world_y[1] = int(world_z[1] * focal_lenght / world_y[1] + height / 2)
     #print(f"worldx: {world_x}, world_y: {world_y}")
     # Draw points
     if(world_x[0] > 0 and world_x[0] < width and world_y[0] > 0 and world_y[0] < height):
-        #window.set_at((int(world_x[0]), int(world_y[0])), YELLOW)
-        pygame.draw.circle(window, YELLOW, (int(world_x[0]), int(world_y[0])), 2)
+        window.set_at((int(world_x[0]), int(world_y[0])), YELLOW)
     if(world_x[1] > 0 and world_x[1] < width and world_y[1] > 0 and world_y[1] < height):
-        pygame.draw.circle(window, YELLOW, (int(world_x[1]), int(world_y[1])), 2)
-
+        window.set_at((int(world_x[1]), int(world_y[1])), YELLOW)
+    drawWall(world_x[0], world_x[1], world_y[0], world_y[1])
+        
 def rad(deg):
     return deg / 180 * math.pi
 
@@ -127,7 +136,6 @@ while running:
 
     #print(f"x: {player_x} y: {player_y} z: {player_z} a: {player_a} l: {player_l}")
     draw3D()
-
 
     pygame.display.update()
     pygame.time.delay(1000 // fps)
