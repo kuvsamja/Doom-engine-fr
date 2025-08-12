@@ -42,23 +42,23 @@ def player_movement(player_speed, player_a, player_l):
     # Movement
     # X
     if tasteri[pygame.K_w]:
-        dx = player_speed * math.sin(rad(player_a))
-        dy = player_speed * math.cos(rad(player_a))
+        dx = dx + player_speed * math.sin(rad(player_a))
+        dy = dy + player_speed * math.cos(rad(player_a))
     if tasteri[pygame.K_s]:
-        dx = player_speed * -math.sin(rad(player_a))
-        dy = player_speed * -math.cos(rad(player_a))
+        dx = dx + player_speed * -math.sin(rad(player_a))
+        dy = dy + player_speed * -math.cos(rad(player_a))
     # Y
     if tasteri[pygame.K_d]:
-        dx = player_speed * math.cos(rad(player_a))
-        dy = player_speed * -math.sin(rad(player_a))
+        dx = dx + player_speed * math.cos(rad(player_a))
+        dy = dy + player_speed * -math.sin(rad(player_a))
     if tasteri[pygame.K_a]:
-        dx = player_speed * -math.cos(rad(player_a))
-        dy = player_speed * math.sin(rad(player_a))
+        dx = dx + player_speed * -math.cos(rad(player_a))
+        dy = dy + player_speed * math.sin(rad(player_a))
     # Z
     if tasteri[pygame.K_SPACE]:
-        dz = -player_speed
+        dz = dz + -player_speed
     if tasteri[pygame.K_LSHIFT]:
-        dz = player_speed
+        dz = dz + player_speed
 
     # Camera
     # Horizontal angle
@@ -90,9 +90,21 @@ def drawWall(x1, x2, b1, b2, t1, t2):
     if dx == 0:
         dx = 1
     xs = x1
+    # Clip x
+    if x1 < 10:  x1 = 10
+    if x2 < 10:  x1 = 10
+    if x1 > width - 10:  x1 = width - 10
+    if x2 > width - 10:  x2 = width - 10
+
     for x in range(x1, x2):
         y1 = dyb * (x - xs) / dx + b1
         y2 = dyt * (x - xs) / dx + t1
+        # Clip y
+        if y1 < 10:  y1 = 10
+        if y2 < 10:  y1 = 10
+        if y1 > height - 10:  y1 = height - 10
+        if y2 > height - 10:  y2 = height - 10
+
         for y in range(int(y1), int(y2)):
             buffer_window.set_at((x, y), YELLOW)
     window.blit(buffer_window, (0, 0))
@@ -107,7 +119,7 @@ def draw3D():
 
     # Point world location (no tilting)
     x1 = 70 - player_x; y1 = 10 - player_y
-    x2 = 70 - player_x; y2 = 290 - player_y
+    x2 = 100 - player_x; y2 = 290 - player_y
     # World X position
     world_x[0] = x1 * CS - y1 * SN
     world_x[1] = x2 * CS - y2 * SN
@@ -140,7 +152,6 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    window.fill(BLACK)
     dx, dy, dz, player_a, player_l = player_movement(player_speed, player_a, player_l)
     player_x = player_x + dx; player_y = player_y + dy; player_z = player_z + dz
 
