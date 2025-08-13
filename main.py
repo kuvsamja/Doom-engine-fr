@@ -9,7 +9,7 @@ aspect_ratio = 4 / 3
 width = 800
 height = width // aspect_ratio
 scale = 1
-fps = 160
+fps = 60
 surface = pygame.display.set_mode((width * scale, height * scale))
 scaled_surface = pygame.Surface((width, height))
 
@@ -18,7 +18,7 @@ SECTOR_NUM = 4
 WALL_NUM = 16
 
 # Camera
-focal_lenght = 300
+focal_lenght = 500
 
 # Time
 last_tick = 0
@@ -45,21 +45,6 @@ def rad(deg):
     return deg / 180 * math.pi
 #_____________________________________________________________________________________
 
-class Walls():
-    x1 = 0
-    y1 = 0
-    x2 = 0
-    y2 = 0
-    color = (0, 0, 0)
-
-class Sectors():
-    wall_start = 0
-    wall_end = 0
-    z1 = 0
-    z2 = 0
-    x = 0
-    y = 0
-    d = 0
 
 def distance(x1, y1, x2, y2):
     distance = math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)) 
@@ -112,12 +97,30 @@ def playerMovement(player_speed, player_a, player_l):
 
 #_______________________________________________________________________________________
 
+class Walls():
+    x1 = 0
+    y1 = 0
+    x2 = 0
+    y2 = 0
+    color = (0, 0, 0)
+
+class Sectors():
+    wall_start = 0
+    wall_end = 0
+    d = 0
+    color1 = (0, 0, 0)
+    color2 = (0, 0, 0)
+    surf = [0 for i in range(width)]
+    surface = 0
+    z1 = 0
+    z2 = 0
+
 def loadSectors():
     return [
-        0, 4, 0, 40,
-        4, 8, 0, 40,
-        8, 12, 0, 40,
-        12, 16, 0, 40
+        0, 4, 0, 40, (0, 255, 0), (255, 0, 0),
+        4, 8, 0, 40, (0, 255, 0), (255, 0, 0),
+        8, 12, 0, 40, (0, 255, 0), (255, 0, 0),
+        12, 16, 0, 40, (0, 255, 0), (255, 0, 0) 
     ]
 def loadWalls(): 
     return [
@@ -150,12 +153,12 @@ def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
     s = da / d
     x1 = x1 + s * (x2 - x1)
     y1 = y1 + s * (y2 - y1)
-    if y1 <= 0.01:
+    if int(y1) == 0:
         y1 = 1
     z1 = z1 + s * (z2 - z1)
     return int(x1), int(y1), int(z1)
 
-def drawWall(x1, x2, b1, b2, t1, t2, color):
+def drawWall(x1, x2, b1, b2, t1, t2, color, s):
     pixel_array = pygame.PixelArray(scaled_surface)
     dyb = b2 - b1
     dyt = t2 - t1
@@ -176,6 +179,22 @@ def drawWall(x1, x2, b1, b2, t1, t2, color):
         if y2 < 1:  y2 = 1
         if y1 > height - 1:  y1 = height - 1
         if y2 > height - 1:  y2 = height - 1
+        if S[s].surface == 1:
+            S[s].surf[x] = y1
+            continue
+        if S[s].surface == 2:
+            S[s].surf[x] = y2
+            continue
+        if S[s].surface == -1:
+            for y in range(int(S[s].surf[x]), int(y1)):
+                pixel_array[x, y] = S[s].color1
+        if S[s].surface == -2:
+            for y in range(int(y2), int(S[s].surf[x])):
+                pixel_array[x, y] = S[s].color2
+
+
+
+
         pixel_array[x, int(y1):int(y2)] = color
     del pixel_array
     
@@ -194,50 +213,65 @@ def draw3D():
                 st = S[w]
                 S[w] = S[w + 1]
                 S[w + 1] = st
-
     for s in range(SECTOR_NUM):
-        S[s].d = 0
-        for w in range (S[s].wall_start, S[s].wall_end):
-            # Point world location (no tilting)
-            x1 = W[w].x1 - player_x; y1 = W[w].y1 - player_y
-            x2 = W[w].x2 - player_x; y2 = W[w].y2 - player_y
-            # World X position
-            world_x[0] = int(x1 * CS - y1 * SN)
-            world_x[1] = int(x2 * CS - y2 * SN)
-            world_x[2] = int(world_x[0])
-            world_x[3] = int(world_x[1])
-            # World Y position
-            world_y[0] = int(y1 * CS + x1 * SN)
-            world_y[1] = int(y2 * CS + x2 * SN)
-            world_y[2] = int(world_y[0])
-            world_y[3] = int(world_y[1])
-            S[s].d = S[s].d + distance(0, 0, (world_x[0] + world_x[1])/2, (world_y[0] + world_y[1])/2)
-            # World Z position
-            world_z[0] = int(S[s].z1 - player_z + ((player_l - 180) * world_y[0] / 64))
-            world_z[1] = int(S[s].z1 - player_z + ((player_l - 180) * world_y[1] / 64))
-            world_z[2] = int(world_z[0] + S[s].z2)
-            world_z[3] = int(world_z[1] + S[s].z2)
-            # Skip drawing behind the player
-            if world_y[0] < 1 and world_y[1] < 1: continue
-            # Point 1 behind the player
-            if world_y[0] < 1:
-                world_x[0], world_y[0], world_z[0] = clipBehindPlayer(world_x[0], world_y[0], world_z[0], world_x[1], world_y[1], world_z[1])
-                world_x[2], world_y[2], world_z[2] = clipBehindPlayer(world_x[2], world_y[2], world_z[2], world_x[3], world_y[3], world_z[3])
-            if world_y[1] < 1:
-                world_x[1], world_y[1], world_z[1] = clipBehindPlayer(world_x[1], world_y[1], world_z[1], world_x[0], world_y[0], world_z[0])
-                world_x[3], world_y[3], world_z[3] = clipBehindPlayer(world_x[3], world_y[3], world_z[3], world_x[2], world_y[2], world_z[2])
-            
-            
-            # Screen x, y, z
-            world_x[0] = int(world_x[0] * focal_lenght / world_y[0] + width / 2); world_y[0] = int(world_z[0] * focal_lenght / world_y[0] + height / 2)
-            world_x[1] = int(world_x[1] * focal_lenght / world_y[1] + width / 2); world_y[1] = int(world_z[1] * focal_lenght / world_y[1] + height / 2)
-            world_x[2] = int(world_x[2] * focal_lenght / world_y[2] + width / 2); world_y[2] = int(world_z[2] * focal_lenght / world_y[2] + height / 2)
-            world_x[3] = int(world_x[3] * focal_lenght / world_y[3] + width / 2); world_y[3] = int(world_z[3] * focal_lenght / world_y[3] + height / 2)
-            
-            # Draw points
-            drawWall(world_x[0], world_x[1], world_y[0], world_y[1], world_y[2], world_y[3], W[w].color)
-        S[s].d = S[s].d / (S[s].wall_end - S[s].wall_start)
-            
+        if player_z < S[s].z1:
+            S[s].surface = 1
+        elif player_z > S[s].z2:
+            S[s].surface = 2
+        else:
+            S[s].surface = 0
+
+        for loop in range(2):
+            S[s].d = 0
+            for w in range (S[s].wall_start, S[s].wall_end):
+                # Point world location (no tilting)
+                x1 = W[w].x1 - player_x; y1 = W[w].y1 - player_y
+                x2 = W[w].x2 - player_x; y2 = W[w].y2 - player_y
+                if loop == 0:
+                    swp = x2
+                    x2 = x1
+                    x1 = swp
+                    swp = y2
+                    y2 = y1
+                    y1 = swp
+                # World X position
+                world_x[0] = int(x1 * CS - y1 * SN)
+                world_x[1] = int(x2 * CS - y2 * SN)
+                world_x[2] = int(world_x[0])
+                world_x[3] = int(world_x[1])
+                # World Y position
+                world_y[0] = int(y1 * CS + x1 * SN)
+                world_y[1] = int(y2 * CS + x2 * SN)
+                world_y[2] = int(world_y[0])
+                world_y[3] = int(world_y[1])
+                S[s].d = S[s].d + distance(0, 0, (world_x[0] + world_x[1])/2, (world_y[0] + world_y[1])/2)
+                # World Z position
+                world_z[0] = int(S[s].z1 - player_z + ((player_l - 180) * world_y[0] / 64))
+                world_z[1] = int(S[s].z1 - player_z + ((player_l - 180) * world_y[1] / 64))
+                world_z[2] = int(world_z[0] + S[s].z2)
+                world_z[3] = int(world_z[1] + S[s].z2)
+                # Skip drawing behind the player
+                if world_y[0] < 1 and world_y[1] < 1: continue
+                # Point 1 behind the player
+                if world_y[0] < 1:
+                    world_x[0], world_y[0], world_z[0] = clipBehindPlayer(world_x[0], world_y[0], world_z[0], world_x[1], world_y[1], world_z[1])
+                    world_x[2], world_y[2], world_z[2] = clipBehindPlayer(world_x[2], world_y[2], world_z[2], world_x[3], world_y[3], world_z[3])
+                if world_y[1] < 1:
+                    world_x[1], world_y[1], world_z[1] = clipBehindPlayer(world_x[1], world_y[1], world_z[1], world_x[0], world_y[0], world_z[0])
+                    world_x[3], world_y[3], world_z[3] = clipBehindPlayer(world_x[3], world_y[3], world_z[3], world_x[2], world_y[2], world_z[2])
+                
+                
+                # Screen x, y, z
+                world_x[0] = int(world_x[0] * focal_lenght / world_y[0] + width / 2); world_y[0] = int(world_z[0] * focal_lenght / world_y[0] + height / 2)
+                world_x[1] = int(world_x[1] * focal_lenght / world_y[1] + width / 2); world_y[1] = int(world_z[1] * focal_lenght / world_y[1] + height / 2)
+                world_x[2] = int(world_x[2] * focal_lenght / world_y[2] + width / 2); world_y[2] = int(world_z[2] * focal_lenght / world_y[2] + height / 2)
+                world_x[3] = int(world_x[3] * focal_lenght / world_y[3] + width / 2); world_y[3] = int(world_z[3] * focal_lenght / world_y[3] + height / 2)
+                
+                # Draw points
+                drawWall(world_x[0], world_x[1], world_y[0], world_y[1], world_y[2], world_y[3], W[w].color, s)
+            S[s].d = S[s].d / (S[s].wall_end - S[s].wall_start)
+            S[s].surface = S[s].surface * -1
+        
 
 W = [Walls() for i in range(30)]
 S = [Sectors() for i in range(30)]
@@ -248,7 +282,9 @@ for s in range(SECTOR_NUM):
     S[s].wall_end = loadSectors()[v1 + 1]
     S[s].z1 = loadSectors()[v1 + 2]
     S[s].z2 = loadSectors()[v1 + 3] - loadSectors()[v1 + 2]
-    v1 = v1 + 4
+    S[s].color1 = loadSectors()[v1 + 4]
+    S[s].color2 = loadSectors()[v1 + 5]
+    v1 = v1 + 6
     for w in range(S[s].wall_start, S[s].wall_end):
         W[w].x1 = loadWalls()[v2+0]
         W[w].y1 = loadWalls()[v2+1]
@@ -274,8 +310,9 @@ while running:
     delta_time = pygame.time.get_ticks() - last_tick
     last_tick = pygame.time.get_ticks()
     
-    if buttons[pygame.K_m]:
-        print(delta_time)
+    # if buttons[pygame.K_m]:
+    #     print(delta_time)
+    print(delta_time)
 
 
     pygame.time.delay(1000 // fps)
