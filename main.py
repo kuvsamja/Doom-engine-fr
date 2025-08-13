@@ -6,15 +6,18 @@ pygame.display.set_caption("3d engine")
 
 # Window
 aspect_ratio = 4 / 3
-width = 400
+width = 800
 height = width // aspect_ratio
-scale = 2
-fps = 120
+scale = 1
+fps = 60
 surface = pygame.display.set_mode((width * scale, height * scale))
 scaled_surface = pygame.Surface((width, height))
 
 # Camera
 focal_lenght = 200
+
+# Time
+last_tick = 0
 
 # Boje
 WHITE = (255,255,255)
@@ -33,8 +36,10 @@ player_a = 0    # Horizontal angle
 player_l = 180    # Vertical angle
 sensitivity = 160 / fps
 player_speed = 160 / fps
-
-
+math.radians
+def rad(deg):
+    return deg / 180 * math.pi
+#_____________________________________________________________________________________
 
 def playerMovement(player_speed, player_a, player_l):
     tasteri = pygame.key.get_pressed()
@@ -82,7 +87,20 @@ def playerMovement(player_speed, player_a, player_l):
             player_l = player_l - 360
     return dx, dy, dz, player_a, player_l
 
+#_______________________________________________________________________________________
 
+def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
+    da = y1
+    db = y2
+    d = da - db
+    if d == 0:  d = 1
+    s = da / d
+    x1 = x1 + s * (x2 - x1)
+    y1 = y1 + s * (y2 - y1)
+    if y1 <= 0.01:
+        y1 = 1
+    z1 = z1 + s * (z2 - z1)
+    return x1, y1, z1
 
 def drawWall(x1, x2, b1, b2, t1, t2):
     pixel_array = pygame.PixelArray(scaled_surface)
@@ -106,23 +124,12 @@ def drawWall(x1, x2, b1, b2, t1, t2):
         if y2 < 1:  y2 = 1
         if y1 > height - 1:  y1 = height - 1
         if y2 > height - 1:  y2 = height - 1
-
-        for y in range(int(y1), int(y2)):
-            pixel_array[x][y] = (YELLOW)
+        pixel_array[x, int(y1):int(y2)] = YELLOW
+        # for y in range(int(y1), int(y2)):
+        #     pixel_array[x][y] = (YELLOW)
     del pixel_array
     
-def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
-    da = y1
-    db = y2
-    d = da - db
-    if d == 0:  d = 1
-    s = da / d
-    x1 = x1 + s * (x2 - x1)
-    y1 = y1 + s * (y2 - y1)
-    if y1 <= 0.01:
-        y1 = 1
-    z1 = z1 + s * (z2 - z1)
-    return x1, y1, z1
+
 def draw3D():
     world_x = [0, 0, 0, 0]
     world_y = [0, 0, 0, 0]
@@ -170,8 +177,9 @@ def draw3D():
     # Draw points
     drawWall(world_x[0], world_x[1], world_y[0], world_y[1], world_y[2], world_y[3])
         
-def rad(deg):
-    return deg / 180 * math.pi
+        
+
+
 
 running = True
 while running:
@@ -186,4 +194,8 @@ while running:
     draw3D()
     surface.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
     pygame.display.update()
+
+    print(pygame.time.get_ticks() - last_tick)
+    last_tick = pygame.time.get_ticks()
+
     pygame.time.delay(1000 // fps)
