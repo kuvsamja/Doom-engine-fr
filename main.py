@@ -186,6 +186,14 @@ def draw3D():
     world_z = [0, 0, 0, 0]
     CS = math.cos(rad(player_a))
     SN = math.sin(rad(player_a))
+    
+    # Sort sectors by distance
+    for s in range(SECTOR_NUM):
+        for w in range(SECTOR_NUM-s-1):
+            if S[w].d < S[w + 1].d:
+                st = S[w]
+                S[w] = S[w + 1]
+                S[w + 1] = st
 
     for s in range(SECTOR_NUM):
         S[s].d = 0
@@ -199,11 +207,11 @@ def draw3D():
             world_x[2] = world_x[0]
             world_x[3] = world_x[1]
             # World Y position
-            S[s].d = S[s].d + distance(0, 0, (world_x[0] + world_x[1])/2, (world_y[0] + world_y[1])/2)
             world_y[0] = y1 * CS + x1 * SN
             world_y[1] = y2 * CS + x2 * SN
             world_y[2] = world_y[0]
             world_y[3] = world_y[1]
+            S[s].d = S[s].d + distance(0, 0, (world_x[0] + world_x[1])/2, (world_y[0] + world_y[1])/2)
             # World Z position
             world_z[0] = S[s].z1 - player_z + ((player_l - 180) * world_y[0] / 64)
             world_z[1] = S[s].z1 - player_z + ((player_l - 180) * world_y[1] / 64)
@@ -228,7 +236,6 @@ def draw3D():
             
             # Draw points
             drawWall(world_x[0], world_x[1], world_y[0], world_y[1], world_y[2], world_y[3], W[w].color)
-        print((S[s].wall_end, S[s].wall_start))
         S[s].d = S[s].d / (S[s].wall_end - S[s].wall_start)
             
 
@@ -242,7 +249,6 @@ for s in range(SECTOR_NUM):
     S[s].z1 = loadSectors()[v1 + 2]
     S[s].z2 = loadSectors()[v1 + 3] - loadSectors()[v1 + 2]
     v1 = v1 + 4
-    print(s)
     for w in range(S[s].wall_start, S[s].wall_end):
         W[w].x1 = loadWalls()[v2+0]
         W[w].y1 = loadWalls()[v2+1]
