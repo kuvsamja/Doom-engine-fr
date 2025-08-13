@@ -5,11 +5,16 @@ pygame.init()
 pygame.display.set_caption("3d engine")
 
 # Window
-aspect_ratio = 16 / 9
-width = 720
+aspect_ratio = 4 / 3
+width = 400
 height = width // aspect_ratio
-fps = 60
-window = pygame.display.set_mode((width, height))
+scale = 2
+fps = 120
+surface = pygame.display.set_mode((width * scale, height * scale))
+scaled_surface = pygame.Surface((width, height))
+
+# Camera
+focal_lenght = 200
 
 # Boje
 WHITE = (255,255,255)
@@ -29,11 +34,9 @@ player_l = 180    # Vertical angle
 sensitivity = 160 / fps
 player_speed = 160 / fps
 
-# Camera
-focal_lenght = 300
 
 
-def player_movement(player_speed, player_a, player_l):
+def playerMovement(player_speed, player_a, player_l):
     tasteri = pygame.key.get_pressed()
     dx = 0
     dy = 0
@@ -58,7 +61,6 @@ def player_movement(player_speed, player_a, player_l):
         dz = dz + -player_speed
     if tasteri[pygame.K_LSHIFT]:
         dz = dz + player_speed
-
     # Camera
     # Horizontal angle
     if tasteri[pygame.K_LEFT]:
@@ -81,8 +83,9 @@ def player_movement(player_speed, player_a, player_l):
     return dx, dy, dz, player_a, player_l
 
 
+
 def drawWall(x1, x2, b1, b2, t1, t2):
-    pixel_array = pygame.PixelArray(window)
+    pixel_array = pygame.PixelArray(scaled_surface)
     pixel_array[:] = BLACK
     dyb = b2 - b1
     dyt = t2 - t1
@@ -91,24 +94,35 @@ def drawWall(x1, x2, b1, b2, t1, t2):
         dx = 1
     xs = x1
     # Clip x
-    if x1 < 10:  x1 = 10
-    if x2 < 10:  x1 = 10
-    if x1 > width - 10:  x1 = width - 10
-    if x2 > width - 10:  x2 = width - 10
+    if x1 < 1:  x1 = 1
+    if x2 < 1:  x1 = 1
+    if x1 > width - 1:  x1 = width - 1
+    if x2 > width - 1:  x2 = width - 1
     for x in range(x1, x2):
         y1 = dyb * (x - xs) / dx + b1
         y2 = dyt * (x - xs) / dx + t1
         # Clip y
-        if y1 < 10:  y1 = 10
-        if y2 < 10:  y1 = 10
-        if y1 > height - 10:  y1 = height - 10
-        if y2 > height - 10:  y2 = height - 10
+        if y1 < 1:  y1 = 1
+        if y2 < 1:  y2 = 1
+        if y1 > height - 1:  y1 = height - 1
+        if y2 > height - 1:  y2 = height - 1
 
         for y in range(int(y1), int(y2)):
             pixel_array[x][y] = (YELLOW)
     del pixel_array
     
-
+def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
+    da = y1
+    db = y2
+    d = da - db
+    if d == 0:  d = 1
+    s = da / d
+    x1 = x1 + s * (x2 - x1)
+    y1 = y1 + s * (y2 - y1)
+    if y1 <= 0.01:
+        y1 = 1
+    z1 = z1 + s * (z2 - z1)
+    return x1, y1, z1
 def draw3D():
     world_x = [0, 0, 0, 0]
     world_y = [0, 0, 0, 0]
@@ -134,12 +148,25 @@ def draw3D():
     world_z[1] = 0 - player_z + ((player_l - 180) * world_y[1] / 64)
     world_z[2] = world_z[0] + 40
     world_z[3] = world_z[1] + 40
+    # Skip drawing behind the player
+    if world_y[0] < 1 and world_y[1] < 1: return
+    # Point 1 behind the player
+    if world_y[0] < 1:
+        world_x[0], world_y[0], world_z[0] = clipBehindPlayer(world_x[0], world_y[0], world_z[0], world_x[1], world_y[1], world_z[1])
+        world_x[2], world_y[2], world_z[2] = clipBehindPlayer(world_x[2], world_y[2], world_z[2], world_x[3], world_y[3], world_z[3])
+    if world_y[1] < 1:
+        world_x[1], world_y[1], world_z[1] = clipBehindPlayer(world_x[1], world_y[1], world_z[1], world_x[0], world_y[0], world_z[0])
+        world_x[3], world_y[3], world_z[3] = clipBehindPlayer(world_x[3], world_y[3], world_z[3], world_x[2], world_y[2], world_z[2])
+    #print(f"worldx: {(int(world_x[0]), int(world_x[1]), int(world_x[2]), int(world_x[3]))}, world_y: {(int(world_y[0]), int(world_y[1]), int(world_y[2]), int(world_y[3]))}")
+    #print(f"worldx: {(world_x[0], world_x[1], world_x[2], world_x[3])}, world_y: {(world_y[0], world_y[1], world_y[2], world_y[3])}")
+    
+    
     # Screen x, y, z
     world_x[0] = int(world_x[0] * focal_lenght / world_y[0] + width / 2); world_y[0] = int(world_z[0] * focal_lenght / world_y[0] + height / 2)
     world_x[1] = int(world_x[1] * focal_lenght / world_y[1] + width / 2); world_y[1] = int(world_z[1] * focal_lenght / world_y[1] + height / 2)
     world_x[2] = int(world_x[2] * focal_lenght / world_y[2] + width / 2); world_y[2] = int(world_z[2] * focal_lenght / world_y[2] + height / 2)
     world_x[3] = int(world_x[3] * focal_lenght / world_y[3] + width / 2); world_y[3] = int(world_z[3] * focal_lenght / world_y[3] + height / 2)
-    #print(f"worldx: {world_x}, world_y: {world_y}")
+    
     # Draw points
     drawWall(world_x[0], world_x[1], world_y[0], world_y[1], world_y[2], world_y[3])
         
@@ -151,11 +178,12 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    dx, dy, dz, player_a, player_l = player_movement(player_speed, player_a, player_l)
+    dx, dy, dz, player_a, player_l = playerMovement(player_speed, player_a, player_l)
     player_x = player_x + dx; player_y = player_y + dy; player_z = player_z + dz
+    scaled_surface.fill(BLACK)
 
     #print(f"x: {player_x} y: {player_y} z: {player_z} a: {player_a} l: {player_l}")
     draw3D()
-
+    surface.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
     pygame.display.update()
     pygame.time.delay(1000 // fps)
