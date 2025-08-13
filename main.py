@@ -9,7 +9,7 @@ aspect_ratio = 4 / 3
 width = 800
 height = width // aspect_ratio
 scale = 1
-fps = 60
+fps = 160
 surface = pygame.display.set_mode((width * scale, height * scale))
 scaled_surface = pygame.Surface((width, height))
 
@@ -18,7 +18,7 @@ SECTOR_NUM = 4
 WALL_NUM = 16
 
 # Camera
-focal_lenght = 200
+focal_lenght = 300
 
 # Time
 last_tick = 0
@@ -153,7 +153,7 @@ def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
     if y1 <= 0.01:
         y1 = 1
     z1 = z1 + s * (z2 - z1)
-    return x1, y1, z1
+    return int(x1), int(y1), int(z1)
 
 def drawWall(x1, x2, b1, b2, t1, t2, color):
     pixel_array = pygame.PixelArray(scaled_surface)
@@ -202,21 +202,21 @@ def draw3D():
             x1 = W[w].x1 - player_x; y1 = W[w].y1 - player_y
             x2 = W[w].x2 - player_x; y2 = W[w].y2 - player_y
             # World X position
-            world_x[0] = x1 * CS - y1 * SN
-            world_x[1] = x2 * CS - y2 * SN
-            world_x[2] = world_x[0]
-            world_x[3] = world_x[1]
+            world_x[0] = int(x1 * CS - y1 * SN)
+            world_x[1] = int(x2 * CS - y2 * SN)
+            world_x[2] = int(world_x[0])
+            world_x[3] = int(world_x[1])
             # World Y position
-            world_y[0] = y1 * CS + x1 * SN
-            world_y[1] = y2 * CS + x2 * SN
-            world_y[2] = world_y[0]
-            world_y[3] = world_y[1]
+            world_y[0] = int(y1 * CS + x1 * SN)
+            world_y[1] = int(y2 * CS + x2 * SN)
+            world_y[2] = int(world_y[0])
+            world_y[3] = int(world_y[1])
             S[s].d = S[s].d + distance(0, 0, (world_x[0] + world_x[1])/2, (world_y[0] + world_y[1])/2)
             # World Z position
-            world_z[0] = S[s].z1 - player_z + ((player_l - 180) * world_y[0] / 64)
-            world_z[1] = S[s].z1 - player_z + ((player_l - 180) * world_y[1] / 64)
-            world_z[2] = world_z[0] + S[s].z2
-            world_z[3] = world_z[1] + S[s].z2
+            world_z[0] = int(S[s].z1 - player_z + ((player_l - 180) * world_y[0] / 64))
+            world_z[1] = int(S[s].z1 - player_z + ((player_l - 180) * world_y[1] / 64))
+            world_z[2] = int(world_z[0] + S[s].z2)
+            world_z[3] = int(world_z[1] + S[s].z2)
             # Skip drawing behind the player
             if world_y[0] < 1 and world_y[1] < 1: continue
             # Point 1 behind the player
