@@ -42,46 +42,46 @@ def rad(deg):
 #_____________________________________________________________________________________
 
 def playerMovement(player_speed, player_a, player_l):
-    tasteri = pygame.key.get_pressed()
     dx = 0
     dy = 0
     dz = 0
     # Movement
     # X
-    if tasteri[pygame.K_w]:
+    if buttons[pygame.K_w]:
         dx = dx + player_speed * math.sin(rad(player_a))
         dy = dy + player_speed * math.cos(rad(player_a))
-    if tasteri[pygame.K_s]:
+    if buttons[pygame.K_s]:
         dx = dx + player_speed * -math.sin(rad(player_a))
         dy = dy + player_speed * -math.cos(rad(player_a))
     # Y
-    if tasteri[pygame.K_d]:
+    if buttons[pygame.K_d]:
         dx = dx + player_speed * math.cos(rad(player_a))
         dy = dy + player_speed * -math.sin(rad(player_a))
-    if tasteri[pygame.K_a]:
+    if buttons[pygame.K_a]:
         dx = dx + player_speed * -math.cos(rad(player_a))
         dy = dy + player_speed * math.sin(rad(player_a))
     # Z
-    if tasteri[pygame.K_SPACE]:
+    if buttons[pygame.K_SPACE]:
         dz = dz + -player_speed
-    if tasteri[pygame.K_LSHIFT]:
+    if buttons[pygame.K_LSHIFT]:
         dz = dz + player_speed
+
     # Camera
     # Horizontal angle
-    if tasteri[pygame.K_LEFT]:
+    if buttons[pygame.K_LEFT]:
         player_a -= sensitivity
         if player_a < 0:
             player_a = player_a + 360
-    if tasteri[pygame.K_RIGHT]:
+    if buttons[pygame.K_RIGHT]:
         player_a += sensitivity
         if player_a > 360:
             player_a = player_a - 360
     # Look angle
-    if tasteri[pygame.K_DOWN]:
+    if buttons[pygame.K_DOWN]:
         player_l -= sensitivity
         if player_l < 0:
             player_l = player_l + 360
-    if tasteri[pygame.K_UP]:
+    if buttons[pygame.K_UP]:
         player_l += sensitivity
         if player_l > 360:
             player_l = player_l - 360
@@ -125,8 +125,6 @@ def drawWall(x1, x2, b1, b2, t1, t2):
         if y1 > height - 1:  y1 = height - 1
         if y2 > height - 1:  y2 = height - 1
         pixel_array[x, int(y1):int(y2)] = YELLOW
-        # for y in range(int(y1), int(y2)):
-        #     pixel_array[x][y] = (YELLOW)
     del pixel_array
     
 
@@ -164,8 +162,6 @@ def draw3D():
     if world_y[1] < 1:
         world_x[1], world_y[1], world_z[1] = clipBehindPlayer(world_x[1], world_y[1], world_z[1], world_x[0], world_y[0], world_z[0])
         world_x[3], world_y[3], world_z[3] = clipBehindPlayer(world_x[3], world_y[3], world_z[3], world_x[2], world_y[2], world_z[2])
-    #print(f"worldx: {(int(world_x[0]), int(world_x[1]), int(world_x[2]), int(world_x[3]))}, world_y: {(int(world_y[0]), int(world_y[1]), int(world_y[2]), int(world_y[3]))}")
-    #print(f"worldx: {(world_x[0], world_x[1], world_x[2], world_x[3])}, world_y: {(world_y[0], world_y[1], world_y[2], world_y[3])}")
     
     
     # Screen x, y, z
@@ -186,16 +182,20 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+    buttons = pygame.key.get_pressed()
     dx, dy, dz, player_a, player_l = playerMovement(player_speed, player_a, player_l)
     player_x = player_x + dx; player_y = player_y + dy; player_z = player_z + dz
     scaled_surface.fill(BLACK)
 
-    #print(f"x: {player_x} y: {player_y} z: {player_z} a: {player_a} l: {player_l}")
     draw3D()
     surface.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
     pygame.display.update()
 
-    print(pygame.time.get_ticks() - last_tick)
+    delta_time = pygame.time.get_ticks() - last_tick
     last_tick = pygame.time.get_ticks()
+    
+    if buttons[pygame.K_m]:
+        print(delta_time)
+
 
     pygame.time.delay(1000 // fps)
