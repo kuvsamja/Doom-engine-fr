@@ -5,12 +5,11 @@ pygame.init()
 pygame.display.set_caption("3d engine")
 
 # Window
-aspect_ratio = 4 / 3
-width = 800
-height = width / aspect_ratio
-fps = 20
+aspect_ratio = 16 / 9
+width = 720
+height = width // aspect_ratio
+fps = 60
 window = pygame.display.set_mode((width, height))
-buffer_window = pygame.Surface((width, height))
 
 # Boje
 WHITE = (255,255,255)
@@ -27,11 +26,11 @@ player_y = -110
 player_z = 20
 player_a = 0    # Horizontal angle
 player_l = 180    # Vertical angle
-sensitivity = 8
-player_speed = 8
+sensitivity = 160 / fps
+player_speed = 160 / fps
 
 # Camera
-focal_lenght = 200
+focal_lenght = 300
 
 
 def player_movement(player_speed, player_a, player_l):
@@ -83,7 +82,8 @@ def player_movement(player_speed, player_a, player_l):
 
 
 def drawWall(x1, x2, b1, b2, t1, t2):
-    buffer_window.fill(BLACK)
+    pixel_array = pygame.PixelArray(window)
+    pixel_array[:] = BLACK
     dyb = b2 - b1
     dyt = t2 - t1
     dx = x2 - x1
@@ -95,7 +95,6 @@ def drawWall(x1, x2, b1, b2, t1, t2):
     if x2 < 10:  x1 = 10
     if x1 > width - 10:  x1 = width - 10
     if x2 > width - 10:  x2 = width - 10
-
     for x in range(x1, x2):
         y1 = dyb * (x - xs) / dx + b1
         y2 = dyt * (x - xs) / dx + t1
@@ -106,8 +105,8 @@ def drawWall(x1, x2, b1, b2, t1, t2):
         if y2 > height - 10:  y2 = height - 10
 
         for y in range(int(y1), int(y2)):
-            buffer_window.set_at((x, y), YELLOW)
-    window.blit(buffer_window, (0, 0))
+            pixel_array[x][y] = (YELLOW)
+    del pixel_array
     
 
 def draw3D():
