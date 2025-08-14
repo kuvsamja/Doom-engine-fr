@@ -9,16 +9,16 @@ aspect_ratio = 4 / 3
 width = 800
 height = width // aspect_ratio
 scale = 1
-fps = 60
-surface = pygame.display.set_mode((width * scale, height * scale))
+fps = 30
+window = pygame.display.set_mode((width * scale, height * scale))
 scaled_surface = pygame.Surface((width, height))
 
 # Map
-SECTOR_NUM = 4
-WALL_NUM = 16
+SECTOR_NUM = 8
+WALL_NUM = 42
 
 # Camera
-focal_lenght = 500
+focal_lenght = 100
 
 # Time
 last_tick = 0
@@ -117,33 +117,107 @@ class Sectors():
 
 def loadSectors():
     return [
+        # 0, 4, 0, 40, (0, 255, 0), (255, 0, 0),
+        # 4, 8, 0, 40, (0, 255, 0), (255, 0, 0),
+        # 8, 12, 0, 40, (0, 255, 0), (255, 0, 0),
+        # 12, 16, 0, 40, (0, 255, 0), (255, 0, 0) 
         0, 4, 0, 40, (0, 255, 0), (255, 0, 0),
         4, 8, 0, 40, (0, 255, 0), (255, 0, 0),
-        8, 12, 0, 40, (0, 255, 0), (255, 0, 0),
-        12, 16, 0, 40, (0, 255, 0), (255, 0, 0) 
+        8, 16, 0, 40, (0, 255, 0), (255, 0, 0),
+        16, 20, -200, 0, (0, 255, 0), (255, 0, 0),
+        20, 24, -200, 0, (0, 255, 0), (255, 0, 0),
+        24, 28, -10, 0, (255, 255, 100), (255, 0, 0),
+        28, 32, -10, 0, (255, 255, 100), (255, 0, 0),
+        32, 36, -10, 0, (255, 255, 100), (255, 0, 0),
     ]
 def loadWalls(): 
     return [
-    0, 0, 32, 0, (0, 255, 255),
-    32, 0, 32, 32, (255, 0, 255),
-    32, 32, 0, 32, (0, 255, 255),
-    0, 32, 0, 0, (255, 0, 255),
+        0, 0, 30, 0, (255, 0, 255),
+        30, 0, 30, 30, (255, 255, 0),
+        30, 30, 0, 30,(255, 0, 255),
+        0, 30, 0, 0,(255, 255, 0),
 
-    64, 0, 96, 0, (0, 255, 255),
-    96, 0, 96, 32, (255, 0, 255),
-    96, 32, 64, 32, (0, 255, 255),
-    64, 32, 64, 0, (255, 0, 255),
+        100, 0, 130, 0,(255, 0, 255),
+        130, 0, 130, 30,(255, 255, 0),
+        130, 30, 100, 30,(255, 0, 255),
+        100, 30, 100, 0, (255, 255, 0),
 
-    64, 64, 96, 64, (0, 255, 255),
-    96, 64, 96, 96, (255, 0, 255),
-    96, 96, 64, 96, (0, 255, 255),
-    64, 96, 64, 64, (255, 0, 255),
+        50, 30, 80, 30, (255, 0, 255),
+        80, 30, 100, 50,(255, 255, 0),
+        100, 50, 100, 80,(255, 0, 255),
+        100, 80, 80, 100,(255, 255, 0),
+        80, 100, 50, 100,(255, 0, 255),
+        50, 100, 30, 80, (255, 255, 0),
+        30, 80, 30, 50, (255, 0, 255),
+        30, 50, 50, 30, (255, 255, 0),
 
-    0, 64, 32, 64, (0, 255, 255),
-    32, 64, 32, 96, (255, 0, 255),
-    32, 96, 0, 96, (0, 255, 255),
-    0, 96, 0, 64, (255, 0, 255)
+        10, 10, 20, 10, (255, 0, 0),
+        20, 10, 20, 20, (0, 255, 0),
+        20, 20, 10, 20, (255, 255, 0),
+        10, 20, 10, 10, (0, 0, 255),
+
+        110, 10, 120, 10, (0, 255, 0),
+        120, 10, 120, 20, (255, 255, 0),
+        120, 20, 110, 20, (0, 255, 0),
+        110, 20, 110, 10, (255, 255, 0),
+
+        60, 50, 70, 50, (0, 255, 0),
+        70, 50, 70, 80, (255, 255, 0),
+        70, 80, 60, 80, (0, 255, 0),
+        60, 80, 60, 50, (255, 255, 0),
+
+        50, 60, 60, 60, (0, 255, 0),
+        60, 60, 60, 70, (255, 0, 0),
+        60, 70, 50, 70, (0, 255, 0),
+        50, 70, 50, 60, (255, 0, 0),
+
+        70, 60, 80, 60, (0, 255, 0),
+        80, 60, 80, 70, (255, 0, 0),
+        80, 70, 70, 70, (0, 255, 0),
+        70, 70, 70, 60, (255, 0, 0),
+
+
+
+
+        # 0, 0, 32, 0, (0, 255, 255),
+        # 32, 0, 32, 32, (255, 0, 255),
+        # 32, 32, 0, 32, (0, 255, 255),
+        # 0, 32, 0, 0, (255, 0, 255),
+
+        # 64, 0, 96, 0, (0, 255, 255),
+        # 96, 0, 96, 32, (255, 0, 255),
+        # 96, 32, 64, 32, (0, 255, 255),
+        # 64, 32, 64, 0, (255, 0, 255),
+
+        # 64, 64, 96, 64, (0, 255, 255),
+        # 96, 64, 96, 96, (255, 0, 255),
+        # 96, 96, 64, 96, (0, 255, 255),
+        # 64, 96, 64, 64, (255, 0, 255),
+
+        # 0, 64, 32, 64, (0, 255, 255),
+        # 32, 64, 32, 96, (255, 0, 255),
+        # 32, 96, 0, 96, (0, 255, 255),
+        # 0, 96, 0, 64, (255, 0, 255)
     ]
+W = [Walls() for i in range(100)]
+S = [Sectors() for i in range(100)]
+v1 = 0
+v2 = 0
+for s in range(SECTOR_NUM):
+    S[s].wall_start = loadSectors()[v1 + 0]
+    S[s].wall_end = loadSectors()[v1 + 1]
+    S[s].z1 = loadSectors()[v1 + 2]
+    S[s].z2 = loadSectors()[v1 + 3] - loadSectors()[v1 + 2]
+    S[s].color1 = loadSectors()[v1 + 4]
+    S[s].color2 = loadSectors()[v1 + 5]
+    v1 = v1 + 6
+    for w in range(S[s].wall_start, S[s].wall_end):
+        W[w].x1 = loadWalls()[v2+0]
+        W[w].y1 = loadWalls()[v2+1]
+        W[w].x2 = loadWalls()[v2+2]
+        W[w].y2 = loadWalls()[v2+3]
+        W[w].color = loadWalls()[v2+4]
+        v2 = v2 + 5
 
 def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
     da = y1
@@ -153,10 +227,10 @@ def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
     s = da / d
     x1 = x1 + s * (x2 - x1)
     y1 = y1 + s * (y2 - y1)
-    if int(y1) == 0:
+    if y1 <= 0.1:
         y1 = 1
     z1 = z1 + s * (z2 - z1)
-    return int(x1), int(y1), int(z1)
+    return x1, y1, z1
 
 def drawWall(x1, x2, b1, b2, t1, t2, color, s):
     pixel_array = pygame.PixelArray(scaled_surface)
@@ -216,7 +290,7 @@ def draw3D():
     for s in range(SECTOR_NUM):
         if player_z < S[s].z1:
             S[s].surface = 1
-        elif player_z > S[s].z2:
+        elif player_z > S[s].z2 + S[s].z1:
             S[s].surface = 2
         else:
             S[s].surface = 0
@@ -271,27 +345,7 @@ def draw3D():
                 drawWall(world_x[0], world_x[1], world_y[0], world_y[1], world_y[2], world_y[3], W[w].color, s)
             S[s].d = S[s].d / (S[s].wall_end - S[s].wall_start)
             S[s].surface = S[s].surface * -1
-        
 
-W = [Walls() for i in range(30)]
-S = [Sectors() for i in range(30)]
-v1 = 0
-v2 = 0
-for s in range(SECTOR_NUM):
-    S[s].wall_start = loadSectors()[v1 + 0]
-    S[s].wall_end = loadSectors()[v1 + 1]
-    S[s].z1 = loadSectors()[v1 + 2]
-    S[s].z2 = loadSectors()[v1 + 3] - loadSectors()[v1 + 2]
-    S[s].color1 = loadSectors()[v1 + 4]
-    S[s].color2 = loadSectors()[v1 + 5]
-    v1 = v1 + 6
-    for w in range(S[s].wall_start, S[s].wall_end):
-        W[w].x1 = loadWalls()[v2+0]
-        W[w].y1 = loadWalls()[v2+1]
-        W[w].x2 = loadWalls()[v2+2]
-        W[w].y2 = loadWalls()[v2+3]
-        W[w].color = loadWalls()[v2+4]
-        v2 = v2 + 5
 
 running = True
 while running:
@@ -304,15 +358,13 @@ while running:
     scaled_surface.fill(BLACK)
 
     draw3D()
-    surface.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
+    window.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
     pygame.display.update()
 
     delta_time = pygame.time.get_ticks() - last_tick
     last_tick = pygame.time.get_ticks()
     
-    # if buttons[pygame.K_m]:
-    #     print(delta_time)
-    print(delta_time)
-
+    if buttons[pygame.K_m or True]:
+        print(delta_time)
 
     pygame.time.delay(1000 // fps)
