@@ -6,8 +6,8 @@ pygame.init()
 pygame.display.set_caption("3d engine")
 
 # Window
-aspect_ratio = 4 / 3
-width = 800
+aspect_ratio = 16 / 9
+width = 1080
 height = width // aspect_ratio
 scale = 1
 fps = 30
@@ -17,6 +17,8 @@ scaled_surface = pygame.Surface((width, height))
 
 # Camera
 focal_lenght = 300
+focal_lenght_old = focal_lenght
+zoom = 3000
 
 # Time
 last_tick = 0
@@ -273,6 +275,11 @@ while running:
     player_x = player_x + dx; player_y = player_y + dy; player_z = player_z + dz
     scaled_surface.fill(BLACK)
 
+    # Zoom
+    focal_lenght = focal_lenght_old
+    if buttons[pygame.K_c]:
+        focal_lenght = zoom
+
     draw3D()
     window.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
     pygame.display.update()
@@ -280,7 +287,7 @@ while running:
     delta_time = pygame.time.get_ticks() - last_tick
     last_tick = pygame.time.get_ticks()
     
-    if buttons[pygame.K_m or True]:
+    if buttons[pygame.K_m]:
         print(delta_time)
 
     pygame.time.delay(1000 // fps)
