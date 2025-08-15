@@ -16,7 +16,7 @@ scaled_surface = pygame.Surface((width, height))
 
 
 # Camera
-focal_lenght = 300
+focal_lenght = 200
 focal_lenght_old = focal_lenght
 zoom = 3000
 
@@ -40,10 +40,11 @@ player_a = 0    # Horizontal angle
 player_l = 180    # Vertical angle
 sensitivity = 160 / fps
 player_speed = 1600 / fps
+colliding = False
 
 def rad(deg):
     return deg / 180 * math.pi
-#_____________________________________________________________________________________
+#-----------------------------------------------------------------------------------------------
 
 
 def distance(x1, y1, x2, y2):
@@ -93,7 +94,9 @@ def playerMovement(player_speed, player_a, player_l):
         player_l += sensitivity
         if player_l > 360:
             player_l = player_l - 360
+
     return dx, dy, dz, player_a, player_l
+
 
 def misc_inputs():
     # Zoom
@@ -111,13 +114,13 @@ def misc_inputs():
 
     # Load map
     if buttons[pygame.K_KP_ENTER]:
-        print("yes")
+        loadMap()
 
 def inputs():
     global dx, dy, dz, player_a, player_l
     dx, dy, dz, player_a, player_l = playerMovement(player_speed, player_a, player_l)
     misc_inputs()
-#_______________________________________________________________________________________
+#----------------------------------------------------------------------------------------------------------
 
 class Walls():
     x1 = 0
@@ -207,16 +210,6 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
         if y2 < 0:  y2 = 0
         if y1 > height:  y1 = height
         if y2 > height:  y2 = height
-        # if S[s].surface == 1:
-        #     S[s].surf[x] = y1
-        #     continue
-        # if S[s].surface == 2:
-        #     S[s].surf[x] = y2
-        #     continue
-        # if S[s].surface == -1:
-        #     pixel_array[x, int(S[s].surf[x]):int(y1)] = S[s].color1
-        # if S[s].surface == -2:
-        #     pixel_array[x, int(y2):int(S[s].surf[x])] = S[s].color2
 
         # Front walls
         if frontBack == 0:
@@ -293,10 +286,15 @@ def draw3D():
                 world_y[3] = int(world_y[1])
                 S[s].d = S[s].d + distance(0, 0, (world_x[0] + world_x[1])/2, (world_y[0] + world_y[1])/2)
                 # World Z position
-                world_z[0] = int(S[s].z1 - player_z + ((player_l - 180) * world_y[0] / 64))
-                world_z[1] = int(S[s].z1 - player_z + ((player_l - 180) * world_y[1] / 64))
-                world_z[2] = int(world_z[0] + S[s].z2)
-                world_z[3] = int(world_z[1] + S[s].z2)
+                world_z[0] = S[s].z1 - player_z
+                world_z[1] = S[s].z1 - player_z
+                world_z[2] = S[s].z2 + S[s].z1 - player_z
+                world_z[3] = S[s].z2 + S[s].z1 - player_z
+                # Adjust Y for vertical camera
+                world_z[0] = world_z[0] + ((player_l - 180) * world_y[0] / 64)
+                world_z[1] = world_z[1] + ((player_l - 180) * world_y[1] / 64)
+                world_z[2] = world_z[2] + ((player_l - 180) * world_y[2] / 64)
+                world_z[3] = world_z[3] + ((player_l - 180) * world_y[3] / 64)
                 # Skip drawing behind the player
                 if world_y[0] < 1 and world_y[1] < 1: continue
                 # Point 1 behind the player
@@ -318,6 +316,28 @@ def draw3D():
                 drawWall(world_x[0], world_x[1], world_y[0], world_y[1], world_y[2], world_y[3], W[w].color, s, w, frontBack)
             S[s].d = S[s].d / (S[s].wall_end - S[s].wall_start)
 
+#------------------------------------------------------------------------------------------------------------------------
+
+def collision3D(player_x, player_y, player_z):
+    colliding = False
+    for s in range(map.SECTOR_NUM):
+        collision_counter = 0
+        for w in range(S[s].wall_start, S[s].wall_end):
+            if player_x < max(W[w].x1, W[w].x2):
+                if W[w].y1 <= player_y <= W[w].y2 or W[w].y2 <= player_y <= W[w].y1:
+                    collision_counter += 1
+        if collision_counter % 2 == 1 and S[s].z1 < player_z < S[s].z2 + S[s].z1:
+            colliding = True
+            break
+    return colliding
+
+def collisionPush():
+    global dx, dy, dz
+    dx = 0
+    dy = 0
+    dz = 0
+
+
 running = True
 while running:
     for event in pygame.event.get():
@@ -325,13 +345,21 @@ while running:
             running = False
     buttons = pygame.key.get_pressed()
     inputs()
+    colliding = collision3D(player_x + dx, player_y + dy, player_z + dz)
+    if colliding:
+        collisionPush()
+    
     player_x = player_x + dx; player_y = player_y + dy; player_z = player_z + dz
+
+
+
+    print(int(player_x), int(player_y), int(player_z), colliding)
     scaled_surface.fill(BLACK)
 
-
-
     draw3D()
+
     window.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
+
     pygame.display.update()
 
 
