@@ -2,14 +2,18 @@ import pygame
 import math
 import map
 
+from textures import T_00, T_01
+
+
+
 pygame.init()
 pygame.display.set_caption("3d engine")
 
 # Window
-aspect_ratio = 16 / 9
-width = 1080
+aspect_ratio = 4 / 3
+width = 400
 height = width // aspect_ratio
-scale = 1
+scale = 2
 fps = 30
 game_speed = 1
 window = pygame.display.set_mode((width * scale, height * scale))
@@ -150,13 +154,12 @@ class Sectors():
     surface_scale = 0
 
 class TextureMaps():
-    texture_width = 0
-    texture_height = 0
-    texture_name = "placeholder"
+    width = 0
+    height = 0
+    name = "placeholder"
 
 def loadMap():
     global textures, W, S
-    textures = [TextureMaps() for i in range(64)]
     W = [Walls() for i in range(256)]
     S = [Sectors() for i in range(128)]
     v1 = 0
@@ -192,6 +195,9 @@ def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
     return x1, y1, z1
 
 def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
+    wt = W[w].wall_texture
+
+
     pixel_array = pygame.PixelArray(scaled_surface)
     dyb = b2 - b1
     dyt = t2 - t1
@@ -199,28 +205,53 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
     if dx == 0:
         dx = 1
     xs = x1
+
+    ht = 0
+    ht_step = textures[wt].width / dx
+    
     # Clip x
-    if x1 < 0:  x1 = 0
-    if x2 < 0:  x1 = 0
-    if x1 > width:  x1 = width
-    if x2 > width:  x2 = width
+    if x1 < 0:
+        ht -= ht_step * x1
+        x1 = 0
+    if x2 < 0:
+        x1 = 0
+    if x1 > width:
+        x1 = width
+    if x2 > width:
+        x2 = width
 
     for x in range(x1, x2):
         y1 = dyb * (x - xs) / dx + b1
         y2 = dyt * (x - xs) / dx + t1
-        # Clip y
-        if y1 < 0:  y1 = 0
-        if y2 < 0:  y2 = 0
-        if y1 > height:  y1 = height
-        if y2 > height:  y2 = height
 
+        vt = 0
+        vt_step = textures[wt].height / (y2 - y1)
+        # Clip y
+        if y1 < 0:
+            vt -= vt_step * y1
+            y1 = 0
+        if y2 < 0:
+            y2 = 0
+        if y1 > height:
+            y1 = height
+        if y2 > height:
+            y2 = height
         # Front walls
         if frontBack == 0:
             if S[s].surface == 1:
                 S[s].surf[x] = y1
             if S[s].surface == 2:
                 S[s].surf[x] = y2
-            pixel_array[x, int(y1):int(y2)] = color
+            # pixel_array[x, int(y1):int(y2)] = color
+            for y in range(int(y1), int(y2)):
+                pixel = int(vt) * 3 * textures[wt].width + int(ht) * 3
+                # print(pixel)
+                c = (textures[wt].name[pixel + 0], textures[wt].name[pixel + 1], textures[wt].name[pixel + 2])
+                vt += vt_step
+                scaled_surface.set_at((x, y), c)
+            ht += ht_step
+
+
         # Back walls
         if frontBack == 1:
             if S[s].surface == 1:
@@ -357,10 +388,28 @@ def collisionPush(w, s, colliding):
         dx = 0
         dy = 0
     last_z_pos = 0
-    print(s, last_z_pos)
 
-    
 
+def testTextures():
+    t = 1
+    for y in range(textures[t].height):
+        for x in range(textures[t].width):
+            pixel = y * 3 * textures[t].width + x * 3
+            r = textures[t].name[pixel + 0]
+            g = textures[t].name[pixel + 1]
+            b = textures[t].name[pixel + 2]
+
+            scaled_surface.set_at((x, y), (r, g, b))
+
+textures = [TextureMaps() for i in range(64)]
+
+textures[0].name = T_00.T_00
+textures[0].height = T_00.HEIGHT
+textures[0].width = T_00.WIDTH
+
+textures[1].name = T_01.T_01
+textures[1].height = T_01.HEIGHT
+textures[1].width = T_01.WIDTH
 
 running = True
 while running:
@@ -379,7 +428,6 @@ while running:
     scaled_surface.fill(BLACK)
 
     draw3D()
-
     window.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
 
     pygame.display.update()
