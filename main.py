@@ -16,7 +16,7 @@ scaled_surface = pygame.Surface((width, height))
 
 
 # Camera
-focal_lenght = 200
+focal_lenght = 300
 focal_lenght_old = focal_lenght
 zoom = 3000
 
@@ -33,11 +33,12 @@ PURPLE = (100,10,100)
 YELLOW = (255, 255, 0)
 
 # Player
-player_x = 70
-player_y = -110
-player_z = 20
-player_a = 0    # Horizontal angle
+player_x = 600
+player_y = 600
+player_z = -1000
+player_a = 180    # Horizontal angle
 player_l = 180    # Vertical angle
+player_height = 200
 sensitivity = 160 / fps
 player_speed = 1600 / fps
 colliding = False
@@ -323,19 +324,28 @@ def collision3D(player_x, player_y, player_z):
     for s in range(map.SECTOR_NUM):
         collision_counter = 0
         for w in range(S[s].wall_start, S[s].wall_end):
-            if player_x < max(W[w].x1, W[w].x2):
-                if W[w].y1 <= player_y <= W[w].y2 or W[w].y2 <= player_y <= W[w].y1:
+            if W[w].x1 == W[w].x2:
+                continue
+            k = (W[w].y1 - W[w].y2) / (W[w].x1 - W[w].x2)
+            n = W[w].y1 - k * W[w].x1
+            y_intercept = k * player_x + n
+            if player_y < y_intercept:
+                if W[w].x1 <= player_x <= W[w].x2 or W[w].x2 <= player_x <= W[w].x1:
                     collision_counter += 1
-        if collision_counter % 2 == 1 and S[s].z1 < player_z < S[s].z2 + S[s].z1:
+                    # print(collision_counter, w)
+        if collision_counter % 2 == 1 and S[s].z1 <= player_z <= S[s].z2 + S[s].z1:
             colliding = True
-            break
+        
+    if colliding:
+        collisionPush(w, s)
     return colliding
 
-def collisionPush():
+def collisionPush(w, s):
     global dx, dy, dz
-    dx = 0
-    dy = 0
-    dz = 0
+    # dx = 0
+    # dy = 0
+    # dz = 0
+    
 
 
 running = True
@@ -345,9 +355,7 @@ while running:
             running = False
     buttons = pygame.key.get_pressed()
     inputs()
-    colliding = collision3D(player_x + dx, player_y + dy, player_z + dz)
-    if colliding:
-        collisionPush()
+    colliding = collision3D(player_x + dx, player_y + dy, player_z + player_height + dz)
     
     player_x = player_x + dx; player_y = player_y + dy; player_z = player_z + dz
 
