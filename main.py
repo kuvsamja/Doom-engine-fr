@@ -11,6 +11,7 @@ width = 1080
 height = width // aspect_ratio
 scale = 1
 fps = 30
+game_speed = 1
 window = pygame.display.set_mode((width * scale, height * scale))
 scaled_surface = pygame.Surface((width, height))
 
@@ -42,6 +43,7 @@ player_height = 200
 sensitivity = 160 / fps
 player_speed = 1600 / fps
 colliding = False
+last_z_pos = 2
 
 def rad(deg):
     return deg / 180 * math.pi
@@ -338,26 +340,24 @@ def collision3D(player_x, player_y, player_z):
                     # print(collision_counter, w)
         if collision_counter % 2 == 1 and S[s].z1 <= player_z <= S[s].z2 + S[s].z1:
             colliding = True
+            collisionPush(w, s, colliding)
             break
         
-    # if colliding:
-    collisionPush(w, s, colliding)
     return colliding
 
 def collisionPush(w, s, colliding):
     global dx, dy, dz, last_z_pos
-    if colliding:
-        if last_z_pos != 0:
-            dz = 0
-        else:
-            dx = 0
-            dy = 0
-    last_z_pos = 0
     if player_z < S[s].z1:
-        last_z_pos = -1
-    if player_z > S[s].z2 + S[s].z1:
         last_z_pos = 1
-    print(last_z_pos)
+    if player_z > S[s].z2 + S[s].z1:
+        last_z_pos = -1
+    if last_z_pos != 0:
+        dz = 0
+    else:
+        dx = 0
+        dy = 0
+    last_z_pos = 0
+    print(s, last_z_pos)
 
     
 
@@ -385,4 +385,4 @@ while running:
     pygame.display.update()
 
 
-    pygame.time.delay(1000 // fps)
+    pygame.time.delay(int(1000 / fps / game_speed))
