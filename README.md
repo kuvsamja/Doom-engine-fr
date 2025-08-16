@@ -1,7 +1,7 @@
-# Doom-engine-fr
+# Doom-engine
 
-todo :
-1. add textures
-2. fix collisions with multiple objects at once
-3. implement a new drawing order algorithm
-4. add gravity and realistic movement
+## todo :
+- [ ] add textures
+- [ ] fix collisions with multiple objects at once
+- [ ] implement a new drawing order algorithm
+- [ ] add gravity and realistic movement
