@@ -320,6 +320,9 @@ def draw3D():
 #------------------------------------------------------------------------------------------------------------------------
 
 def collision3D(player_x, player_y, player_z):
+    player_x = player_x + dx
+    player_y = player_y + dy
+    player_z = player_z + dz
     colliding = False
     for s in range(map.SECTOR_NUM):
         collision_counter = 0
@@ -335,16 +338,27 @@ def collision3D(player_x, player_y, player_z):
                     # print(collision_counter, w)
         if collision_counter % 2 == 1 and S[s].z1 <= player_z <= S[s].z2 + S[s].z1:
             colliding = True
+            break
         
-    if colliding:
-        collisionPush(w, s)
+    # if colliding:
+    collisionPush(w, s, colliding)
     return colliding
 
-def collisionPush(w, s):
-    global dx, dy, dz
-    # dx = 0
-    # dy = 0
-    # dz = 0
+def collisionPush(w, s, colliding):
+    global dx, dy, dz, last_z_pos
+    if colliding:
+        if last_z_pos != 0:
+            dz = 0
+        else:
+            dx = 0
+            dy = 0
+    last_z_pos = 0
+    if player_z < S[s].z1:
+        last_z_pos = -1
+    if player_z > S[s].z2 + S[s].z1:
+        last_z_pos = 1
+    print(last_z_pos)
+
     
 
 
@@ -355,13 +369,13 @@ while running:
             running = False
     buttons = pygame.key.get_pressed()
     inputs()
-    colliding = collision3D(player_x + dx, player_y + dy, player_z + player_height + dz)
+    colliding = collision3D(player_x, player_y, player_z)
     
     player_x = player_x + dx; player_y = player_y + dy; player_z = player_z + dz
 
 
 
-    print(int(player_x), int(player_y), int(player_z), colliding)
+    # print(int(player_x), int(player_y), int(player_z), colliding)
     scaled_surface.fill(BLACK)
 
     draw3D()
