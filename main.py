@@ -2,7 +2,7 @@ import pygame
 import math
 import map
 
-from textures import T_00, T_01
+from textures.texture_lists import T_00, T_01, T_02
 
 
 
@@ -10,10 +10,11 @@ pygame.init()
 pygame.display.set_caption("3d engine")
 
 # Window
-aspect_ratio = 4 / 3
-width = 400
+
+aspect_ratio = 4 / 3 
+width = 200
 height = width // aspect_ratio
-scale = 2
+scale = 4
 fps = 30
 game_speed = 1
 window = pygame.display.set_mode((width * scale, height * scale))
@@ -21,7 +22,7 @@ scaled_surface = pygame.Surface((width, height))
 
 
 # Camera
-focal_lenght = 300
+focal_lenght = 100
 focal_lenght_old = focal_lenght
 zoom = 3000
 
@@ -51,82 +52,6 @@ last_z_pos = 2
 
 def rad(deg):
     return deg / 180 * math.pi
-#-----------------------------------------------------------------------------------------------
-
-
-def distance(x1, y1, x2, y2):
-    distance = math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)) 
-    return distance
-def playerMovement(player_speed, player_a, player_l):
-    dx = 0
-    dy = 0
-    dz = 0
-    # Movement
-    # X
-    if buttons[pygame.K_w]:
-        dx = dx + player_speed * math.sin(rad(player_a))
-        dy = dy + player_speed * math.cos(rad(player_a))
-    if buttons[pygame.K_s]:
-        dx = dx + player_speed * -math.sin(rad(player_a))
-        dy = dy + player_speed * -math.cos(rad(player_a))
-    # Y
-    if buttons[pygame.K_d]:
-        dx = dx + player_speed * math.cos(rad(player_a))
-        dy = dy + player_speed * -math.sin(rad(player_a))
-    if buttons[pygame.K_a]:
-        dx = dx + player_speed * -math.cos(rad(player_a))
-        dy = dy + player_speed * math.sin(rad(player_a))
-    # Z
-    if buttons[pygame.K_SPACE]:
-        dz = dz + -player_speed
-    if buttons[pygame.K_LSHIFT]:
-        dz = dz + player_speed
-
-    # Camera
-    # Horizontal angle
-    if buttons[pygame.K_LEFT]:
-        player_a -= sensitivity
-        if player_a < 0:
-            player_a = player_a + 360
-    if buttons[pygame.K_RIGHT]:
-        player_a += sensitivity
-        if player_a > 360:
-            player_a = player_a - 360
-    # Look angle
-    if buttons[pygame.K_DOWN]:
-        player_l -= sensitivity
-        if player_l < 0:
-            player_l = player_l + 360
-    if buttons[pygame.K_UP]:
-        player_l += sensitivity
-        if player_l > 360:
-            player_l = player_l - 360
-
-    return dx, dy, dz, player_a, player_l
-
-
-def misc_inputs():
-    # Zoom
-    global focal_lenght, focal_lenght_old, zoom
-    focal_lenght = focal_lenght_old
-    if buttons[pygame.K_c]:
-        focal_lenght = zoom
-
-    # ms delay
-    global delta_time, last_tick
-    delta_time = pygame.time.get_ticks() - last_tick
-    last_tick = pygame.time.get_ticks()
-    if buttons[pygame.K_m]:
-        print(delta_time)
-
-    # Load map
-    if buttons[pygame.K_KP_ENTER]:
-        loadMap()
-
-def inputs():
-    global dx, dy, dz, player_a, player_l
-    dx, dy, dz, player_a, player_l = playerMovement(player_speed, player_a, player_l)
-    misc_inputs()
 #----------------------------------------------------------------------------------------------------------
 
 class Walls():
@@ -158,6 +83,22 @@ class TextureMaps():
     height = 0
     name = "placeholder"
 
+
+textures = [TextureMaps() for i in range(64)]
+
+textures[0].name = T_00.T_00
+textures[0].height = T_00.HEIGHT
+textures[0].width = T_00.WIDTH
+
+textures[1].name = T_01.T_01
+textures[1].height = T_01.HEIGHT
+textures[1].width = T_01.WIDTH
+
+textures[2].name = T_02.T_02
+textures[2].height = T_02.HEIGHT
+textures[2].width = T_02.WIDTH
+
+
 def loadMap():
     global textures, W, S
     W = [Walls() for i in range(256)]
@@ -177,9 +118,15 @@ def loadMap():
             W[w].y1 = map.loadWalls()[v2+1]
             W[w].x2 = map.loadWalls()[v2+2]
             W[w].y2 = map.loadWalls()[v2+3]
-            W[w].color = map.loadWalls()[v2+4]
-            v2 = v2 + 5
+            W[w].wall_texture = map.loadWalls()[v2+4]
+            W[w].u = map.loadWalls()[v2+5]
+            W[w].v = map.loadWalls()[v2+6]
+            v2 = v2 + 7
 loadMap()
+
+def floors():
+    pass
+
 
 def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
     da = y1
@@ -207,7 +154,7 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
     xs = x1
 
     ht = 0
-    ht_step = textures[wt].width / dx
+    ht_step = textures[wt].width * W[w].u / dx
     
     # Clip x
     if x1 < 0:
@@ -225,7 +172,10 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
         y2 = dyt * (x - xs) / dx + t1
 
         vt = 0
-        vt_step = textures[wt].height / (y2 - y1)
+        if y1 == y2:
+            vt_step = textures[wt].height * W[w].v
+        else:
+            vt_step = textures[wt].height * W[w].v / (y2 - y1)
         # Clip y
         if y1 < 0:
             vt -= vt_step * y1
@@ -244,7 +194,7 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
                 S[s].surf[x] = y2
             # pixel_array[x, int(y1):int(y2)] = color
             for y in range(int(y1), int(y2)):
-                pixel = int(vt) * 3 * textures[wt].width + int(ht) * 3
+                pixel = int(vt)%textures[wt].height * 3 * textures[wt].width + int(ht)%textures[wt].width * 3
                 # print(pixel)
                 c = (textures[wt].name[pixel + 0], textures[wt].name[pixel + 1], textures[wt].name[pixel + 2])
                 vt += vt_step
@@ -401,15 +351,78 @@ def testTextures():
 
             scaled_surface.set_at((x, y), (r, g, b))
 
-textures = [TextureMaps() for i in range(64)]
+#-----------------------------------------------------------------------------------------------
 
-textures[0].name = T_00.T_00
-textures[0].height = T_00.HEIGHT
-textures[0].width = T_00.WIDTH
 
-textures[1].name = T_01.T_01
-textures[1].height = T_01.HEIGHT
-textures[1].width = T_01.WIDTH
+def distance(x1, y1, x2, y2):
+    distance = math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)) 
+    return distance
+def playerMovement(player_speed, player_a, player_l):
+    dx = 0
+    dy = 0
+    dz = 0
+    # Movement
+    # X
+    if buttons[pygame.K_w]:
+        dx = dx + player_speed * math.sin(rad(player_a))
+        dy = dy + player_speed * math.cos(rad(player_a))
+    if buttons[pygame.K_s]:
+        dx = dx + player_speed * -math.sin(rad(player_a))
+        dy = dy + player_speed * -math.cos(rad(player_a))
+    # Y
+    if buttons[pygame.K_d]:
+        dx = dx + player_speed * math.cos(rad(player_a))
+        dy = dy + player_speed * -math.sin(rad(player_a))
+    if buttons[pygame.K_a]:
+        dx = dx + player_speed * -math.cos(rad(player_a))
+        dy = dy + player_speed * math.sin(rad(player_a))
+    # Z
+    if buttons[pygame.K_SPACE]:
+        dz = dz + -player_speed
+    if buttons[pygame.K_LSHIFT]:
+        dz = dz + player_speed
+
+    # Camera
+    # Horizontal angle
+    if buttons[pygame.K_LEFT]:
+        player_a -= sensitivity
+        if player_a < 0:
+            player_a = player_a + 360
+    if buttons[pygame.K_RIGHT]:
+        player_a += sensitivity
+        if player_a > 360:
+            player_a = player_a - 360
+    # Look angle
+    if buttons[pygame.K_DOWN]:
+        player_l -= sensitivity
+    if buttons[pygame.K_UP]:
+        player_l += sensitivity
+
+    return dx, dy, dz, player_a, player_l
+
+
+def misc_inputs():
+    # Zoom
+    global focal_lenght, focal_lenght_old, zoom
+    focal_lenght = focal_lenght_old
+    if buttons[pygame.K_c]:
+        focal_lenght = zoom
+
+    # ms delay
+    global delta_time, last_tick
+    delta_time = pygame.time.get_ticks() - last_tick
+    last_tick = pygame.time.get_ticks()
+    if buttons[pygame.K_m]:
+        print(1000 / delta_time)
+
+    # Load map
+    if buttons[pygame.K_KP_ENTER]:
+        loadMap()
+
+def inputs():
+    global dx, dy, dz, player_a, player_l
+    dx, dy, dz, player_a, player_l = playerMovement(player_speed, player_a, player_l)
+    misc_inputs()
 
 running = True
 while running:
