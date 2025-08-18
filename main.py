@@ -11,11 +11,11 @@ pygame.display.set_caption("3d engine")
 
 # Window
 
-aspect_ratio = 4 / 3 
-width = 200
+aspect_ratio = 4 / 3
+width = 100
 height = width // aspect_ratio
-scale = 4
-fps = 30
+scale = 8
+fps = 60
 game_speed = 1
 window = pygame.display.set_mode((width * scale, height * scale))
 scaled_surface = pygame.Surface((width, height))
@@ -45,7 +45,8 @@ player_z = -1000
 player_a = 180    # Horizontal angle
 player_l = 180    # Vertical angle
 player_height = 200
-sensitivity = 160 / fps
+sensitivity_x = 160 / fps
+sensitivity_y = 160 / fps
 player_speed = 1600 / fps
 colliding = False
 last_z_pos = 2
@@ -125,7 +126,35 @@ def loadMap():
 loadMap()
 
 def floors():
-    pass
+    mult = focal_lenght / 64
+    look_up_down = (player_l -180) *  mult
+    xo = int(width/2)
+    yo = int(height/2)
+    pixel_array = pygame.PixelArray(scaled_surface)
+    
+    
+    for y in range(int(look_up_down), yo):
+        for x in range(-xo, xo):
+            z = y - look_up_down
+            if z == 0:
+                z = 0.0001
+            fx = x / z
+            fy = focal_lenght / z
+            rx = fx*math.sin(rad(player_a)) - fy*math.cos(rad(player_a)) - player_y/512
+            ry = fx*math.cos(rad(player_a)) + fy*math.sin(rad(player_a)) + player_x/512
+
+            if rx < 0:
+                rx = -rx + 1
+            if ry < 0:
+                ry = -ry + 1
+            if int(rx) % 2 == int(ry) % 2:
+                pixel_array[x + xo, y + yo] = (255, 0, 0)
+            else:
+                pixel_array[x + xo, y + yo] = (0, 255, 0)
+
+    del pixel_array
+
+                
 
 
 def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
@@ -385,18 +414,18 @@ def playerMovement(player_speed, player_a, player_l):
     # Camera
     # Horizontal angle
     if buttons[pygame.K_LEFT]:
-        player_a -= sensitivity
+        player_a -= sensitivity_x
         if player_a < 0:
             player_a = player_a + 360
     if buttons[pygame.K_RIGHT]:
-        player_a += sensitivity
+        player_a += sensitivity_x
         if player_a > 360:
             player_a = player_a - 360
     # Look angle
     if buttons[pygame.K_DOWN]:
-        player_l -= sensitivity
+        player_l -= sensitivity_y
     if buttons[pygame.K_UP]:
-        player_l += sensitivity
+        player_l += sensitivity_y
 
     return dx, dy, dz, player_a, player_l
 
@@ -440,6 +469,7 @@ while running:
     # print(int(player_x), int(player_y), int(player_z), colliding)
     scaled_surface.fill(BLACK)
 
+    floors()
     draw3D()
     window.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
 
