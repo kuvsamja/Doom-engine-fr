@@ -12,9 +12,9 @@ pygame.display.set_caption("3d engine")
 # Window
 
 aspect_ratio = 4 / 3
-width = 200
+width = 100
 height = width // aspect_ratio
-scale = 4
+scale = 8
 fps = 30
 game_speed = 1
 window = pygame.display.set_mode((width * scale, height * scale))
@@ -76,7 +76,8 @@ class Sectors():
     surface = 0
     z1 = 0
     z2 = 0
-    surface_texture = 2
+    ceiling_texture = 0
+    floor_texture = 0
     surface_scale = 1
 
 class TextureMaps():
@@ -111,8 +112,8 @@ def loadMap():
         S[s].wall_end = map.loadSectors()[v1 + 1]
         S[s].z1 = map.loadSectors()[v1 + 2]
         S[s].z2 = map.loadSectors()[v1 + 3] - map.loadSectors()[v1 + 2]
-        S[s].color1 = map.loadSectors()[v1 + 4]
-        S[s].color2 = map.loadSectors()[v1 + 5]
+        S[s].floor_texture = map.loadSectors()[v1 + 4]
+        S[s].ceiling_texture = map.loadSectors()[v1 + 5]
         v1 = v1 + 6
         for w in range(S[s].wall_start, S[s].wall_end):
             W[w].x1 = map.loadWalls()[v2+0]
@@ -251,10 +252,13 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
             if S[s].surface == 1:
                 y2 = S[s].surf[x]
                 wo = S[s].z1
+                surface_texture = S[s].floor_texture
+
                 # c = S[s].color1
             if S[s].surface == 2:
                 y1 = S[s].surf[x]
                 wo = S[s].z1 + S[s].z2
+                surface_texture = S[s].ceiling_texture
                 # c = S[s].color2
             # pixel_array[x, int(y1):int(y2)] = c
 
@@ -277,7 +281,7 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
                 if ry < 0:
                     ry = -ry + 1
                 
-                st = S[s].surface_texture
+                st = surface_texture
                 pixel = (textures[st].height - int(ry) % textures[st].height - 1) * 3 * textures[st].width + (int(rx) % textures[st].width)*3
                 r = textures[st].name[pixel + 0]
                 g = textures[st].name[pixel + 1]
