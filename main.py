@@ -12,10 +12,10 @@ pygame.display.set_caption("3d engine")
 # Window
 
 aspect_ratio = 4 / 3
-width = 100
+width = 200
 height = width // aspect_ratio
-scale = 8
-fps = 60
+scale = 4
+fps = 30
 game_speed = 1
 window = pygame.display.set_mode((width * scale, height * scale))
 scaled_surface = pygame.Surface((width, height))
@@ -39,10 +39,10 @@ PURPLE = (100,10,100)
 YELLOW = (255, 255, 0)
 
 # Player
-player_x = 600
-player_y = 600
-player_z = -1000
-player_a = 180    # Horizontal angle
+player_x = 2850
+player_y = 180
+player_z = -600
+player_a = 0    # Horizontal angle
 player_l = 180    # Vertical angle
 player_height = 200
 sensitivity_x = 160 / fps
@@ -76,8 +76,8 @@ class Sectors():
     surface = 0
     z1 = 0
     z2 = 0
-    surface_texture = 0
-    surface_scale = 0
+    surface_texture = 2
+    surface_scale = 1
 
 class TextureMaps():
     width = 0
@@ -128,18 +128,23 @@ loadMap()
 def floors():
     mult = focal_lenght / 64
     look_up_down = (player_l -180) *  mult
+    move_up_down = -player_z / 512
     xo = int(width/2)
     yo = int(height/2)
     pixel_array = pygame.PixelArray(scaled_surface)
+    ys = int(look_up_down)
+    ye = yo
+    if move_up_down < 0:
+        ye = int(look_up_down)
+        ys = int(-yo)
     
-    
-    for y in range(int(look_up_down), yo):
+    for y in range(ys, ye):
         for x in range(-xo, xo):
             z = y - look_up_down
             if z == 0:
                 z = 0.0001
-            fx = x / z
-            fy = focal_lenght / z
+            fx = x / z * move_up_down
+            fy = focal_lenght / z * move_up_down
             rx = fx*math.sin(rad(player_a)) - fy*math.cos(rad(player_a)) - player_y/512
             ry = fx*math.cos(rad(player_a)) + fy*math.sin(rad(player_a)) + player_x/512
 
@@ -147,6 +152,9 @@ def floors():
                 rx = -rx + 1
             if ry < 0:
                 ry = -ry + 1
+            if rx <= 0 or ry <= 0 or rx >=5 or ry >= 5:
+                continue
+            
             if int(rx) % 2 == int(ry) % 2:
                 pixel_array[x + xo, y + yo] = (255, 0, 0)
             else:
@@ -227,18 +235,59 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
                 # print(pixel)
                 c = (textures[wt].name[pixel + 0], textures[wt].name[pixel + 1], textures[wt].name[pixel + 2])
                 vt += vt_step
-                scaled_surface.set_at((x, y), c)
+                pixel_array[x, y] = c
             ht += ht_step
 
 
         # Back walls
         if frontBack == 1:
+            
+            mult = focal_lenght / 64
+            xo = int(width/2)
+            yo = int(height/2)
+            x2 = x - xo
+            tile = S[s].surface_scale * 10
+
             if S[s].surface == 1:
                 y2 = S[s].surf[x]
-                pixel_array[x, int(y1):int(y2)] = S[s].color1
+                wo = S[s].z1
+                # c = S[s].color1
             if S[s].surface == 2:
                 y1 = S[s].surf[x]
-                pixel_array[x, int(y1):int(y2)] = S[s].color2
+                wo = S[s].z1 + S[s].z2
+                # c = S[s].color2
+            # pixel_array[x, int(y1):int(y2)] = c
+
+            look_up_down = (player_l -180) *  mult
+            move_up_down = (-player_z + wo) / 512
+            ys = int(y1 - yo)
+            ye = int(y2 - yo)
+
+            for y in range(ys, ye):
+                z = y - look_up_down
+                if z == 0:
+                    z = 0.0001
+                fx = x2 / z * move_up_down * tile
+                fy = focal_lenght / z * move_up_down * tile
+                rx = fx*math.sin(rad(player_a)) - fy*math.cos(rad(player_a)) - player_y/500*tile
+                ry = fx*math.cos(rad(player_a)) + fy*math.sin(rad(player_a)) + player_x/500*tile
+
+                if rx < 0:
+                    rx = -rx + 1
+                if ry < 0:
+                    ry = -ry + 1
+                
+                st = S[s].surface_texture
+                pixel = (textures[st].height - int(ry) % textures[st].height - 1) * 3 * textures[st].width + (int(rx) % textures[st].width)*3
+                r = textures[st].name[pixel + 0]
+                g = textures[st].name[pixel + 1]
+                b = textures[st].name[pixel + 2]
+                pixel_array[x2 + xo, y + yo] = (r, g, b)
+                # if int(rx) % 2 == int(ry) % 2:
+                #     pixel_array[x2 + xo, y + yo] = (255, 0, 0)
+                # else:
+                #     pixel_array[x2 + xo, y + yo] = (0, 255, 0)
+
 
 
     del pixel_array
@@ -466,11 +515,11 @@ while running:
 
 
 
-    # print(int(player_x), int(player_y), int(player_z), colliding)
+    # print(int(player_x), int(player_y), int(player_z))
     scaled_surface.fill(BLACK)
 
-    floors()
     draw3D()
+    # floors()
     window.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
 
     pygame.display.update()
