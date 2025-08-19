@@ -12,17 +12,17 @@ pygame.display.set_caption("3d engine")
 # Window
 
 aspect_ratio = 4 / 3
-width = 100
+width = 800
 height = width // aspect_ratio
-scale = 8
-fps = 30
+scale = 1
+fps = 10
 game_speed = 1
 window = pygame.display.set_mode((width * scale, height * scale))
 scaled_surface = pygame.Surface((width, height))
 
 
 # Camera
-focal_lenght = 100
+focal_lenght = 300
 focal_lenght_old = focal_lenght
 zoom = 3000
 
