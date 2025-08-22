@@ -1,7 +1,9 @@
 import pygame
 import math
-import map
+# import cProfile
+# import numpy
 
+import map
 from textures.texture_lists import T_00, T_01, T_02
 
 
@@ -15,7 +17,7 @@ aspect_ratio = 4 / 3
 width = 800
 height = width // aspect_ratio
 scale = 1
-fps = 10
+fps = 30
 game_speed = 1
 window = pygame.display.set_mode((width * scale, height * scale))
 scaled_surface = pygame.Surface((width, height))
@@ -46,13 +48,11 @@ player_a = 0    # Horizontal angle
 player_l = 180    # Vertical angle
 player_height = 200
 sensitivity_x = 160 / fps
-sensitivity_y = 160 / fps
+sensitivity_y = 40 / fps
 player_speed = 1600 / fps
 colliding = False
 last_z_pos = 2
 
-def rad(deg):
-    return deg / 180 * math.pi
 #----------------------------------------------------------------------------------------------------------
 
 class Walls():
@@ -146,8 +146,8 @@ def floors():
                 z = 0.0001
             fx = x / z * move_up_down
             fy = focal_lenght / z * move_up_down
-            rx = fx*math.sin(rad(player_a)) - fy*math.cos(rad(player_a)) - player_y/512
-            ry = fx*math.cos(rad(player_a)) + fy*math.sin(rad(player_a)) + player_x/512
+            rx = fx*math.sin(math.radians(player_a)) - fy*math.cos(math.radians(player_a)) - player_y/512
+            ry = fx*math.cos(math.radians(player_a)) + fy*math.sin(math.radians(player_a)) + player_x/512
 
             if rx < 0:
                 rx = -rx + 1
@@ -181,9 +181,10 @@ def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
 
 def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
     wt = W[w].wall_texture
+    SN = math.sin(math.radians(player_a))
+    CS = math.cos(math.radians(player_a))
 
-
-    pixel_array = pygame.PixelArray(scaled_surface)
+    framebuffer = pygame.surfarray.pixels3d(scaled_surface)
     dyb = b2 - b1
     dyt = t2 - t1
     dx = x2 - x1
@@ -236,7 +237,7 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
                 # print(pixel)
                 c = (textures[wt].name[pixel + 0], textures[wt].name[pixel + 1], textures[wt].name[pixel + 2])
                 vt += vt_step
-                pixel_array[x, y] = c
+                framebuffer[x, y] = c
             ht += ht_step
 
 
@@ -273,8 +274,8 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
                     z = 0.0001
                 fx = x2 / z * move_up_down * tile
                 fy = focal_lenght / z * move_up_down * tile
-                rx = fx*math.sin(rad(player_a)) - fy*math.cos(rad(player_a)) - player_y/500*tile
-                ry = fx*math.cos(rad(player_a)) + fy*math.sin(rad(player_a)) + player_x/500*tile
+                rx = fx*SN - fy*CS - player_y/500*tile
+                ry = fx*CS + fy*SN + player_x/500*tile
 
                 if rx < 0:
                     rx = -rx + 1
@@ -286,7 +287,7 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
                 r = textures[st].name[pixel + 0]
                 g = textures[st].name[pixel + 1]
                 b = textures[st].name[pixel + 2]
-                pixel_array[x2 + xo, y + yo] = (r, g, b)
+                framebuffer[x2 + xo, y + yo] = (r, g, b)
                 # if int(rx) % 2 == int(ry) % 2:
                 #     pixel_array[x2 + xo, y + yo] = (255, 0, 0)
                 # else:
@@ -294,15 +295,15 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
 
 
 
-    del pixel_array
+    del framebuffer
     
 
 def draw3D():
     world_x = [0, 0, 0, 0]
     world_y = [0, 0, 0, 0]
     world_z = [0, 0, 0, 0]
-    CS = math.cos(rad(player_a))
-    SN = math.sin(rad(player_a))
+    CS = math.cos(math.radians(player_a))
+    SN = math.sin(math.radians(player_a))
     
     # Sort sectors by distance
     for s in range(map.SECTOR_NUM):
@@ -446,18 +447,18 @@ def playerMovement(player_speed, player_a, player_l):
     # Movement
     # X
     if buttons[pygame.K_w]:
-        dx = dx + player_speed * math.sin(rad(player_a))
-        dy = dy + player_speed * math.cos(rad(player_a))
+        dx = dx + player_speed * math.sin(math.radians(player_a))
+        dy = dy + player_speed * math.cos(math.radians(player_a))
     if buttons[pygame.K_s]:
-        dx = dx + player_speed * -math.sin(rad(player_a))
-        dy = dy + player_speed * -math.cos(rad(player_a))
+        dx = dx + player_speed * -math.sin(math.radians(player_a))
+        dy = dy + player_speed * -math.cos(math.radians(player_a))
     # Y
     if buttons[pygame.K_d]:
-        dx = dx + player_speed * math.cos(rad(player_a))
-        dy = dy + player_speed * -math.sin(rad(player_a))
+        dx = dx + player_speed * math.cos(math.radians(player_a))
+        dy = dy + player_speed * -math.sin(math.radians(player_a))
     if buttons[pygame.K_a]:
-        dx = dx + player_speed * -math.cos(rad(player_a))
-        dy = dy + player_speed * math.sin(rad(player_a))
+        dx = dx + player_speed * -math.cos(math.radians(player_a))
+        dy = dy + player_speed * math.sin(math.radians(player_a))
     # Z
     if buttons[pygame.K_SPACE]:
         dz = dz + -player_speed
@@ -495,7 +496,7 @@ def misc_inputs():
     delta_time = pygame.time.get_ticks() - last_tick
     last_tick = pygame.time.get_ticks()
     if buttons[pygame.K_m]:
-        print(1000 / delta_time)
+        print(delta_time)
 
     # Load map
     if buttons[pygame.K_KP_ENTER]:
@@ -517,16 +518,19 @@ while running:
     
     player_x = player_x + dx; player_y = player_y + dy; player_z = player_z + dz
 
-
+    print(delta_time)
+    delta_time = pygame.time.get_ticks() - last_tick
+    last_tick = pygame.time.get_ticks()
+    
 
     # print(int(player_x), int(player_y), int(player_z))
     scaled_surface.fill(BLACK)
-
     draw3D()
+    # cProfile.run("draw3D()")
     # floors()
     window.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
 
     pygame.display.update()
 
-
-    pygame.time.delay(int(1000 / fps / game_speed))
+    if 1000 // fps > delta_time:
+        pygame.time.delay(1000 // fps - delta_time)
