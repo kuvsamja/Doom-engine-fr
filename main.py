@@ -4,7 +4,7 @@ import math
 # import numpy
 
 import map
-from textures.texture_lists import T_00, T_01, T_02
+from textures.texture_lists import T_00, T_01, T_02, T_03, T_04, T_05, T_06, T_07
 
 
 
@@ -99,6 +99,26 @@ textures[1].width = T_01.WIDTH
 textures[2].name = T_02.T_02
 textures[2].height = T_02.HEIGHT
 textures[2].width = T_02.WIDTH
+
+textures[3].name = T_03.T_03
+textures[3].height = T_03.HEIGHT
+textures[3].width = T_03.WIDTH
+
+textures[4].name = T_04.T_04
+textures[4].height = T_04.HEIGHT
+textures[4].width = T_04.WIDTH
+
+textures[5].name = T_05.T_05
+textures[5].height = T_05.HEIGHT
+textures[5].width = T_05.WIDTH
+
+textures[6].name = T_06.T_06
+textures[6].height = T_06.HEIGHT
+textures[6].width = T_06.WIDTH
+
+textures[7].name = T_07.T_07
+textures[7].height = T_07.HEIGHT
+textures[7].width = T_07.WIDTH
 
 
 def loadMap():
