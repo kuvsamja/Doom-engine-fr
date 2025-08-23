@@ -1,10 +1,10 @@
 import pygame
 import math
-# import cProfile
+import cProfile
 # import numpy
 
 import map
-from textures.texture_lists import T_00, T_01, T_02
+from textures.texture_lists import spritesheet
 
 
 
@@ -30,6 +30,7 @@ zoom = 3000
 
 # Time
 last_tick = 0
+delta_time = 0
 
 # Boje
 WHITE = (255,255,255)
@@ -47,9 +48,9 @@ player_z = -600
 player_a = 0    # Horizontal angle
 player_l = 180    # Vertical angle
 player_height = 200
-sensitivity_x = 160 / fps
+sensitivity_x = 180 / fps
 sensitivity_y = 40 / fps
-player_speed = 1600 / fps
+player_speed = 3000 / fps
 colliding = False
 last_z_pos = 2
 
@@ -80,29 +81,10 @@ class Sectors():
     floor_texture = 0
     surface_scale = 1
 
-class TextureMaps():
-    width = 0
-    height = 0
-    name = "placeholder"
-
-
-textures = [TextureMaps() for i in range(64)]
-
-textures[0].name = T_00.T_00
-textures[0].height = T_00.HEIGHT
-textures[0].width = T_00.WIDTH
-
-textures[1].name = T_01.T_01
-textures[1].height = T_01.HEIGHT
-textures[1].width = T_01.WIDTH
-
-textures[2].name = T_02.T_02
-textures[2].height = T_02.HEIGHT
-textures[2].width = T_02.WIDTH
 
 
 def loadMap():
-    global textures, W, S
+    global W, S
     W = [Walls() for i in range(256)]
     S = [Sectors() for i in range(128)]
     v1 = 0
@@ -125,45 +107,6 @@ def loadMap():
             W[w].v = map.loadWalls()[v2+6]
             v2 = v2 + 7
 loadMap()
-
-def floors():
-    mult = focal_lenght / 64
-    look_up_down = (player_l -180) *  mult
-    move_up_down = -player_z / 512
-    xo = int(width/2)
-    yo = int(height/2)
-    pixel_array = pygame.PixelArray(scaled_surface)
-    ys = int(look_up_down)
-    ye = yo
-    if move_up_down < 0:
-        ye = int(look_up_down)
-        ys = int(-yo)
-    
-    for y in range(ys, ye):
-        for x in range(-xo, xo):
-            z = y - look_up_down
-            if z == 0:
-                z = 0.0001
-            fx = x / z * move_up_down
-            fy = focal_lenght / z * move_up_down
-            rx = fx*math.sin(math.radians(player_a)) - fy*math.cos(math.radians(player_a)) - player_y/512
-            ry = fx*math.cos(math.radians(player_a)) + fy*math.sin(math.radians(player_a)) + player_x/512
-
-            if rx < 0:
-                rx = -rx + 1
-            if ry < 0:
-                ry = -ry + 1
-            if rx <= 0 or ry <= 0 or rx >=5 or ry >= 5:
-                continue
-            
-            if int(rx) % 2 == int(ry) % 2:
-                pixel_array[x + xo, y + yo] = (255, 0, 0)
-            else:
-                pixel_array[x + xo, y + yo] = (0, 255, 0)
-
-    del pixel_array
-
-                
 
 
 def clipBehindPlayer(x1, y1, z1, x2, y2, z2):
@@ -193,7 +136,7 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
     xs = x1
 
     ht = 0
-    ht_step = textures[wt].width * W[w].u / dx
+    ht_step = spritesheet.textures[wt].width * W[w].u / dx
     
     # Clip x
     if x1 < 0:
@@ -212,9 +155,9 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
 
         vt = 0
         if y1 == y2:
-            vt_step = textures[wt].height * W[w].v
+            vt_step = spritesheet.textures[wt].height * W[w].v
         else:
-            vt_step = textures[wt].height * W[w].v / (y2 - y1)
+            vt_step = spritesheet.textures[wt].height * W[w].v / (y2 - y1)
         # Clip y
         if y1 < 0:
             vt -= vt_step * y1
@@ -233,9 +176,9 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
                 S[s].surf[x] = y2
             # pixel_array[x, int(y1):int(y2)] = color
             for y in range(int(y1), int(y2)):
-                pixel = int(vt)%textures[wt].height * 3 * textures[wt].width + int(ht)%textures[wt].width * 3
+                pixel = int(vt)%spritesheet.textures[wt].height * 3 * spritesheet.width + int(ht)%spritesheet.textures[wt].width * 3 + spritesheet.textures[wt].location
                 # print(pixel)
-                c = (textures[wt].name[pixel + 0], textures[wt].name[pixel + 1], textures[wt].name[pixel + 2])
+                c = (spritesheet.spritesheet[pixel + 0], spritesheet.spritesheet[pixel + 1], spritesheet.spritesheet[pixel + 2])
                 vt += vt_step
                 framebuffer[x, y] = c
             ht += ht_step
@@ -267,7 +210,7 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
             move_up_down = (-player_z + wo) / 512
             ys = int(y1 - yo)
             ye = int(y2 - yo)
-
+ 
             for y in range(ys, ye):
                 z = y - look_up_down
                 if z == 0:
@@ -283,10 +226,11 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
                     ry = -ry + 1
                 
                 st = surface_texture
-                pixel = (textures[st].height - int(ry) % textures[st].height - 1) * 3 * textures[st].width + (int(rx) % textures[st].width)*3
-                r = textures[st].name[pixel + 0]
-                g = textures[st].name[pixel + 1]
-                b = textures[st].name[pixel + 2]
+                pixel = (spritesheet.textures[st].height - int(ry) % spritesheet.textures[st].height - 1) * 3 * spritesheet.width + (int(rx) % spritesheet.textures[st].width)*3 + spritesheet.textures[st].location
+                
+                r = spritesheet.spritesheet[pixel + 0]
+                g = spritesheet.spritesheet[pixel + 1]
+                b = spritesheet.spritesheet[pixel + 2]
                 framebuffer[x2 + xo, y + yo] = (r, g, b)
                 # if int(rx) % 2 == int(ry) % 2:
                 #     pixel_array[x2 + xo, y + yo] = (255, 0, 0)
@@ -374,10 +318,17 @@ def draw3D():
                 
                 
                 # Screen x, y, z
-                world_x[0] = int(world_x[0] * focal_lenght / world_y[0] + width / 2); world_y[0] = int(world_z[0] * focal_lenght / world_y[0] + height / 2)
-                world_x[1] = int(world_x[1] * focal_lenght / world_y[1] + width / 2); world_y[1] = int(world_z[1] * focal_lenght / world_y[1] + height / 2)
-                world_x[2] = int(world_x[2] * focal_lenght / world_y[2] + width / 2); world_y[2] = int(world_z[2] * focal_lenght / world_y[2] + height / 2)
-                world_x[3] = int(world_x[3] * focal_lenght / world_y[3] + width / 2); world_y[3] = int(world_z[3] * focal_lenght / world_y[3] + height / 2)
+                world_x[0] = int(world_x[0] * focal_lenght / world_y[0] + width / 2)
+                world_y[0] = int(world_z[0] * focal_lenght / world_y[0] + height / 2)
+
+                world_x[1] = int(world_x[1] * focal_lenght / world_y[1] + width / 2)
+                world_y[1] = int(world_z[1] * focal_lenght / world_y[1] + height / 2)
+
+                world_x[2] = int(world_x[2] * focal_lenght / world_y[2] + width / 2)
+                world_y[2] = int(world_z[2] * focal_lenght / world_y[2] + height / 2)
+
+                world_x[3] = int(world_x[3] * focal_lenght / world_y[3] + width / 2)
+                world_y[3] = int(world_z[3] * focal_lenght / world_y[3] + height / 2)
                 
                 # Draw points
                 drawWall(world_x[0], world_x[1], world_y[0], world_y[1], world_y[2], world_y[3], W[w].color, s, w, frontBack)
@@ -424,14 +375,13 @@ def collisionPush(w, s, colliding):
 
 
 def testTextures():
-    t = 1
-    for y in range(textures[t].height):
-        for x in range(textures[t].width):
-            pixel = y * 3 * textures[t].width + x * 3
-            r = textures[t].name[pixel + 0]
-            g = textures[t].name[pixel + 1]
-            b = textures[t].name[pixel + 2]
-
+    t = 8
+    for y in range(spritesheet.textures[t].height):
+        for x in range(spritesheet.textures[t].width):
+            pixel = y * 3 * spritesheet.width + x * 3 + spritesheet.textures[t].location
+            r = spritesheet.spritesheet[pixel + 0]
+            g = spritesheet.spritesheet[pixel + 1]
+            b = spritesheet.spritesheet[pixel + 2]
             scaled_surface.set_at((x, y), (r, g, b))
 
 #-----------------------------------------------------------------------------------------------
@@ -491,12 +441,6 @@ def misc_inputs():
     if buttons[pygame.K_c]:
         focal_lenght = zoom
 
-    # ms delay
-    global delta_time, last_tick
-    delta_time = pygame.time.get_ticks() - last_tick
-    last_tick = pygame.time.get_ticks()
-    if buttons[pygame.K_m]:
-        print(delta_time)
 
     # Load map
     if buttons[pygame.K_KP_ENTER]:
@@ -507,8 +451,19 @@ def inputs():
     dx, dy, dz, player_a, player_l = playerMovement(player_speed, player_a, player_l)
     misc_inputs()
 
+# def calcDeltaTime():
+#     # ms delay
+#     global delta_time, last_tick
+#     delta_time = pygame.time.get_ticks() - last_tick
+#     last_tick = pygame.time.get_ticks()
+#     if buttons[pygame.K_m]:
+#         print(delta_time)
+    
+all_time = 0
+k = 0
 running = True
 while running:
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -518,19 +473,23 @@ while running:
     
     player_x = player_x + dx; player_y = player_y + dy; player_z = player_z + dz
 
-    print(delta_time)
-    delta_time = pygame.time.get_ticks() - last_tick
-    last_tick = pygame.time.get_ticks()
-    
-
-    # print(int(player_x), int(player_y), int(player_z))
     scaled_surface.fill(BLACK)
+    last_tick = pygame.time.get_ticks()
     draw3D()
-    # cProfile.run("draw3D()")
-    # floors()
+    delta_time = pygame.time.get_ticks() - last_tick
+    # testTextures()
     window.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
 
     pygame.display.update()
 
-    if 1000 // fps > delta_time:
-        pygame.time.delay(1000 // fps - delta_time)
+    
+    
+    # if 1000 // fps > delta_time:
+    #     pygame.time.delay(1000 // fps - delta_time)
+    # delta_time = pygame.time.get_ticks() - last_tick
+    print(delta_time)
+
+    all_time += delta_time
+    k += 1
+all_time /= k
+print(all_time)
