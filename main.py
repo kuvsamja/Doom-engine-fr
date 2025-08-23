@@ -1,6 +1,6 @@
 import pygame
 import math
-# import cProfile
+import cProfile
 # import numpy
 
 import map
@@ -14,9 +14,9 @@ pygame.display.set_caption("3d engine")
 # Window
 
 aspect_ratio = 4 / 3
-width = 800
+width = 200
 height = width // aspect_ratio
-scale = 1
+scale = 4
 fps = 30
 game_speed = 1
 window = pygame.display.set_mode((width * scale, height * scale))
@@ -24,7 +24,7 @@ scaled_surface = pygame.Surface((width, height))
 
 
 # Camera
-focal_lenght = 300
+focal_lenght = 100
 focal_lenght_old = focal_lenght
 zoom = 3000
 
@@ -319,6 +319,7 @@ def drawWall(x1, x2, b1, b2, t1, t2, color, s, w, frontBack):
     
 
 def draw3D():
+    scaled_surface.fill(BLACK)
     world_x = [0, 0, 0, 0]
     world_y = [0, 0, 0, 0]
     world_z = [0, 0, 0, 0]
@@ -526,6 +527,14 @@ def inputs():
     global dx, dy, dz, player_a, player_l
     dx, dy, dz, player_a, player_l = playerMovement(player_speed, player_a, player_l)
     misc_inputs()
+def delay():
+    global last_tick
+    delta_time = pygame.time.get_ticks() - last_tick
+    if 1000 // fps > delta_time:
+        pygame.time.delay(1000 // fps - delta_time)
+    delta_time = pygame.time.get_ticks() - last_tick
+    print(delta_time)
+    last_tick = pygame.time.get_ticks()
 
 running = True
 while running:
@@ -533,24 +542,13 @@ while running:
         if event.type == pygame.QUIT:
             running = False
     buttons = pygame.key.get_pressed()
+
     inputs()
-    colliding = collision3D(player_x, player_y, player_z)
-    
+    collision3D(player_x, player_y, player_z)
     player_x = player_x + dx; player_y = player_y + dy; player_z = player_z + dz
-
-    print(delta_time)
-    delta_time = pygame.time.get_ticks() - last_tick
-    last_tick = pygame.time.get_ticks()
-    
-
-    # print(int(player_x), int(player_y), int(player_z))
-    scaled_surface.fill(BLACK)
     draw3D()
-    # cProfile.run("draw3D()")
-    # floors()
-    window.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
 
+    window.blit(pygame.transform.scale(scaled_surface, (width * scale, height * scale)), (0, 0))
     pygame.display.update()
 
-    if 1000 // fps > delta_time:
-        pygame.time.delay(1000 // fps - delta_time)
+    delay()
