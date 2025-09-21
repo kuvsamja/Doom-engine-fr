@@ -79,7 +79,7 @@ if __name__ == "__main__":
         framebuffer = engine.draw3D(player_x, player_y, player_z, player_a, player_l)
         pygame.surfarray.blit_array(window, framebuffer)
 
-        pygame.display.flip()4
+        pygame.display.flip()
 
         time_passed = time.time() - start_frametime
         pygame.time.delay(int(1000 / fps - time_passed))
