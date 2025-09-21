@@ -1,22 +1,17 @@
 import engine
 import pygame
 import math
+import time
 
 # Window
+pygame.init()
+pygame.display.set_caption("3d engine")
 width = engine.width
 height = engine.height
-fps = 30
+fps = 60
 window = pygame.display.set_mode((width, height))
 
 if __name__ == "__main__":
-    pygame.init()
-    pygame.display.set_caption("3d engine")
-
-    # Window
-    aspect_ratio = 16 / 9
-    width = 1080
-    height = width // aspect_ratio
-    fps = 30
 
     # Player
     player_x = 10
@@ -72,6 +67,7 @@ if __name__ == "__main__":
 
     running = True
     while running:
+        start_frametime = time.time()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -80,10 +76,10 @@ if __name__ == "__main__":
         player_x = player_x + dx; player_y = player_y + dy; player_z = player_z + dz
         window.fill((0, 0, 0))
 
-
-
         framebuffer = engine.draw3D(player_x, player_y, player_z, player_a, player_l)
         pygame.surfarray.blit_array(window, framebuffer)
-        pygame.display.flip()
 
-        pygame.time.delay(1000 // fps)
+        pygame.display.flip()4
+
+        time_passed = time.time() - start_frametime
+        pygame.time.delay(int(1000 / fps - time_passed))
